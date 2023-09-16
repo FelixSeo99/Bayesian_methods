@@ -21,9 +21,10 @@
 # RStudio files
 .Rproj.user/
 
-# produced vignettes
+# produced vignettes and other stuff
 vignettes/*.html
 vignettes/*.pdf
+Lab1_instructions.pdf
 
 # OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
 .httr-oauth

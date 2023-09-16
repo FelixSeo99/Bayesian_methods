@@ -1,0 +1,40 @@
+---
+title: "lab1"
+author: "Felix Seo"
+date: "2023-09-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(rstan)
+library(tidyverse)
+```
+
+```{r}
+# gives two models fit and fit2.
+example(stan_model, package = "rstan", run.dontrun = TRUE)
+
+# Extract the y values for both models.
+fit_y <- rstan::extract(fit, pars = "y", permuted = TRUE) %>% 
+  unlist(use.names = FALSE) 
+fit2_y <- rstan::extract(fit2, pars = "y", permuted = TRUE) %>% 
+  unlist(use.names = FALSE) 
+
+# Combine data to single data frame
+data_fit12 <- data.frame("fit" = fit_y, "fit2" = fit2_y) %>% 
+  pivot_longer(everything(), names_to = "group", values_to = "y")
+
+# plot the densities for the samples.
+data_fit12 %>% 
+  ggplot(aes(x = y, fill = group)) +
+  geom_density(alpha = 0.6)
+
+# Seems that we sample from two normal distributions with the same standard 
+# deviation but mean 0 and 5 for fit and fit 2 respectively. 
+```
+
