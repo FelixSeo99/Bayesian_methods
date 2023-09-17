@@ -15,6 +15,8 @@ library(rstan)
 library(tidyverse)
 ```
 
+# EXERCISE 1
+
 ```{r}
 # gives two models fit and fit2.
 example(stan_model, package = "rstan", run.dontrun = TRUE)
@@ -36,5 +38,23 @@ data_fit12 %>%
 
 # Seems that we sample from two normal distributions with the same standard 
 # deviation but mean 0 and 5 for fit and fit 2 respectively. 
+```
+
+# EXERCISE 3
+
+```{r}
+data_3_a <- list("N" = 6, "y" = c(6, 10, 9, 15, 6, 7))
+
+fit_3_a <- stan(
+  file = "model_3_a.stan",
+  data = data_3_a,
+  chains = 4,             # number of Markov chains
+  warmup = 1000,          # number of warmup iterations per chain
+  iter = 3500,            # total number of iterations per chain
+  cores = 4,              # number of cores (could use one per chain)
+  refresh = 0             # no progress shown
+)
+
+rstan::extract(fit_3_a, pars = "y_tilde")
 ```
 
