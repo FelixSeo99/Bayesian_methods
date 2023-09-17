@@ -24,6 +24,6 @@ model {
   y ~ poisson(theta);
 }
 
-generated quantities {
-  int<lower = 0> y_tilde = poisson_rng(theta);
-}
+//generated quantities {
+//  int<lower = 0> y_tilde = poisson_rng(theta);
+// }
