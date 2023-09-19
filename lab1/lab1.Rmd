@@ -43,11 +43,13 @@ data_fit12 %>%
 # EXERCISE 3
 
 ```{r}
-data_3_a <- list("N" = 6, "y" = c(6, 10, 9, 15, 6, 7))
+# part a
+
+data_3 <- list("N" = 6, "y" = c(6, 10, 9, 15, 6, 7))
 
 fit_3_a <- stan(
   file = "model_3_a.stan",
-  data = data_3_a,
+  data = data_3,
   chains = 4,             # number of Markov chains
   warmup = 1000,          # number of warmup iterations per chain
   iter = 3500,            # total number of iterations per chain
@@ -55,7 +57,7 @@ fit_3_a <- stan(
   refresh = 0             # no progress shown
 )
 
-shape_3_a <- 0.01 + data_3_a$y %>% sum()
+shape_3_a <- 0.01 + data_3$y %>% sum()
   
 
 rstan::extract(fit_3_a, pars = "theta") %>% 
@@ -82,6 +84,76 @@ rstan::extract(fit_3_a, pars = "theta") %>%
 ```
 
 ```{r}
+# part b
+fit_3_b <- stan(
+  file = "model_3_b.stan",
+  data = data_3,
+  chains = 4,             # number of Markov chains
+  warmup = 500,          # number of warmup iterations per chain
+  iter = 1000,            # total number of iterations per chain
+  cores = 2,              # number of cores (could use one per chain)
+  refresh = 0             # no progress shown
+)
 
+
+```
+
+
+```{r} 
+# Part c
+qpredpost <- function(q, x, alpha, beta) {
+  alpha_PG <- alpha + sum(x)
+  beta_PG <- beta + length(x)
+  p <- beta_PG / (beta_PG + 1)
+  r <- alpha_PG 
+  qnbinom(q, r, p)
+}
+```
+
+```{r}
+# Part d
+fit_3_d <- stan(
+  file = "model_3_d.stan",
+  data = data_3,
+  chains = 4,             # number of Markov chains
+  warmup = 500,          # number of warmup iterations per chain
+  iter = 1000,            # total number of iterations per chain
+  cores = 2,              # number of cores (could use one per chain)
+  refresh = 0             # no progress shown
+)
+
+rstan::extract(fit_3_d, pars = "theta") %>% 
+  unlist(use.names = FALSE) %>% 
+  as.data.frame() %>% 
+  add_column(theta_true = rgamma(2000, shape = shape_3_a, rate = 0.002 + 6)) %>% 
+  rename("theta_sample" = ".") %>%
+  #pivot_longer(everything(), names_to = "group", values_to = "theta") %>% 
+  {ggplot(data = NULL) +
+  geom_histogram(
+    aes(x = .$theta_sample, y = ..density..), 
+    bins = 100, 
+    colour = 1,
+    fill = "white"
+  ) +
+  geom_density(
+    aes(x = .$theta_true), 
+    lwd = 1,
+    colour = 4,
+    fill = 4, 
+    alpha = 0.25
+  )} 
+
+```
+
+```{r}
+fit_3_d %>% 
+  rstan::extract(pars = "y_rep") %>% 
+  unlist(use.names = FALSE) %>% 
+  quantile(probs = seq(0, 1, 0.05))
+
+fit_3_d %>% 
+  rstan::extract(pars = "theta") %>% 
+  unlist(use.names = FALSE) %>%
+  {qpredpost(0.9, ., 0.01, 0.002)}
 ```
 
