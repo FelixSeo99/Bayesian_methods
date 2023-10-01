@@ -1,0 +1,21 @@
+---
+title: "lab2"
+author: "Felix Seo"
+date: "2023-10-01"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(rstan)
+```
+
+```{r}
+data_aspirin <- read_delim("../data/aspirin.txt")
+
+data_aspirin %>% 
+  mutate(reduction = Before - After) %>% 
+  ggplot(aes(x = Before, y = reduction)) +
+  geom_point()
+```
+
