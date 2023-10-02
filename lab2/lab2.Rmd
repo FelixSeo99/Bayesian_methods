@@ -11,11 +11,63 @@ library(rstan)
 ```
 
 ```{r}
+# part 1 a
 data_aspirin <- read_delim("../data/aspirin.txt")
 
 data_aspirin %>% 
   mutate(reduction = Before - After) %>% 
   ggplot(aes(x = Before, y = reduction)) +
   geom_point()
+```
+
+```{r}
+#part 1 b
+
+fit_1_b <- data_aspirin %>% 
+  {mutate(., x = Before - mean(.$Before))} %>%
+  mutate(y = Before - After) %>%
+  {list("N" = 12, "y" = .$y, "x" = .$x)} %>% 
+  {stan("model_1_b.stan", 
+  data = .,
+  chains = 4,             # number of Markov chains
+  warmup = 1000,          # number of warmup iterations per chain
+  iter = 3000,            # total number of iterations per chain
+  cores = 4,              # number of cores (could use one per chain)
+  refresh = 0             # no progress shown
+  )}
+
+cred_int_95 <- fit_1_b %>% 
+  summary(pars = "beta", probs = c(0.025, 0.975)) %>% 
+  {.$summary[4:5]}
+
+fit_1_b %>% 
+  rstan::extract(pars = "beta") %>% 
+  unlist(use.names = FALSE) %>% 
+  as.data.frame() %>% 
+  rename("beta" = ".") %>% 
+  ggplot() +
+  geom_histogram(
+    aes(x = beta, y = ..density..),
+    bins = 100, 
+    color = "black", 
+    fill = "white"
+  ) +
+  geom_vline(
+    data = NULL,
+    xintercept = cred_int_95[1],
+    linetype = "dashed", 
+    size = 0.5,
+    color = "red"
+  ) +
+  geom_vline(
+    data = NULL,
+    xintercept = cred_int_95[2],
+    linetype = "dashed", 
+    size = 0.5,
+    color = "red"
+  )
+
+
+
 ```
 
