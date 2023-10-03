@@ -3,8 +3,6 @@ data {
   int<lower=0> N;
   vector[N] x;
   vector[N] y;
-  
-  real x_new;
 }
 
 parameters {
@@ -14,12 +12,6 @@ parameters {
   
 //  real y_new;
 }
-
-//transformed parameters {
-//  real<lower=0,upper=1> p;
-  
-//  p = 1 - normal_cdf(0, alpha + beta * x_new, sigma);
-//}
 
 model {
   alpha ~ normal(0, 10);
@@ -31,5 +23,12 @@ model {
 }
 
 generated quantities {
-  real y_new = normal_rng(alpha + beta * x_new, sigma);
+  real sresid_apr[N];
+  real cpo_apr[N];
+  for (i in 1:N) {
+    sresid_apr[i] = (y[i]- (alpha + beta * x[i])) / sigma;
+    cpo_apr[i] = 1 / (sigma*2.506628) * exp(-0.5*((y[i] - (alpha + beta * x[i]))^2));
+  }
 }
+  
+
