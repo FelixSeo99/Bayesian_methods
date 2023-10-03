@@ -22,9 +22,10 @@ data_aspirin %>%
 
 ```{r}
 #part 1 b
+x_mean <- data_aspirin$Before %>% mean()
 
 fit_1_b <- data_aspirin %>% 
-  {mutate(., x = Before - mean(.$Before))} %>%
+  mutate(x = Before - x_mean) %>%
   mutate(y = Before - After) %>%
   {list("N" = 12, "y" = .$y, "x" = .$x)} %>% 
   {stan("model_1_b.stan", 
@@ -32,9 +33,11 @@ fit_1_b <- data_aspirin %>%
   chains = 4,             # number of Markov chains
   warmup = 1000,          # number of warmup iterations per chain
   iter = 3000,            # total number of iterations per chain
-  cores = 4,              # number of cores (could use one per chain)
-  refresh = 0             # no progress shown
+  cores = 2,              # number of cores (could use one per chain)
+  refresh = 0,            # no progress shown
+  seed = 990108
   )}
+
 
 cred_int_95 <- fit_1_b %>% 
   summary(pars = "beta", probs = c(0.025, 0.975)) %>% 
@@ -47,7 +50,7 @@ fit_1_b %>%
   rename("beta" = ".") %>% 
   ggplot() +
   geom_histogram(
-    aes(x = beta, y = ..density..),
+    aes(x = beta, y = after_stat(density)),
     bins = 100, 
     color = "black", 
     fill = "white"
@@ -68,6 +71,25 @@ fit_1_b %>%
   )
 
 
+```
+
+```{r}
+# part 1 c
+
+fit_1_c <- data_aspirin %>% 
+  mutate(x = Before - x_mean, y = Before - After) %>%
+  {list("N" = 12, "y" = .$y, "x" = .$x, "N_new" = 1, "x_new" = c(100 - x_mean))} %>% 
+  {stan("model_1_c.stan", 
+  data = .,
+  chains = 4,             # number of Markov chains
+  warmup = 200,          # number of warmup iterations per chain
+  iter = 1000,            # total number of iterations per chain
+  cores = 2,              # number of cores (could use one per chain)
+  refresh = 0,            # no progress shown
+  seed = 990108
+  )}
+
+fit_1_c
 
 ```
 
