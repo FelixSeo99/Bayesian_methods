@@ -1,0 +1,49 @@
+---
+title: "Untitled"
+author: "Felix Seo"
+date: "2023-10-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(mvtnorm)
+library(tidyverse)
+```
+
+```{r}
+# Task 5 b
+
+mean_vec <- c(0, 10)
+cov_mat <- matrix(c(4, 12, 12, 100), nrow = 2)
+
+
+# x and y is vector of values. 
+unnorm_post <- function(alpha, beta, x, y, n){
+  prob_pi <- 1 / (1 + exp( - (alpha + beta * x)))
+  log_lik <- dbinom(y, n, prob_pi, log = TRUE) # log=TRUE gives the log like.
+  log_prior <- dmvnorm(c(alpha, beta), mean_vec, cov_mat, log = TRUE)
+  log_post <- sum(log_lik) + log_prior
+  log_post
+}
+
+seq_alpha <- seq(-2.5, 5, 0.1)
+seq_beta <- seq(-1, 30, 1)
+
+data.frame(
+  "alpha" = rep(seq_alpha, each = length(seq_beta)),
+  "beta" = rep(seq_beta, times = length(seq_alpha))
+) %>% 
+  ggplot(aes(x = alpha, y = beta)) +
+  geom_density_2d()
+
+#data.frame("alpha" = seq_alpha, "beta" = seq_beta) %>% 
+#  ggplot(aes(x = alpha, y = beta)) +
+#  geom_density_2d(bins = 20)
+  
+
+```
+
