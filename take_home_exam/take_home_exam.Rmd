@@ -168,6 +168,7 @@ MH_alg <- function(theta_init, iter, x, y, n = 5){
 MH_alg(c(-2.5, 0), 3000, data_toxic$x, data_toxic$y)
 
 
+
 #####################
 
 
