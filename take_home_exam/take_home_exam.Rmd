@@ -12,7 +12,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(mvtnorm)
 library(tidyverse)
-library(plotly)
 ```
 
 ```{r}
@@ -53,5 +52,99 @@ data.frame(
   geom_contour_filled()
 
 
+```
+
+```{r}
+# Task 5 c
+
+# outputs a vector of sequences of theta as 
+# c(theta_0, theta_1, ...) = c(alpha_0, beta_0, alpha_1, beta_1, ...).
+MH_alg <- function(theta_init, iter, x, y, n = 5){
+  prop_cov <- matrix(c(1, 0, 0, 5), nrow = 2)
+  theta_seq <- c(theta_init) # prop_mean_seq
+  theta <- theta_init       # prop_mean
+  #alpha_seq <- c(theta_init[1])
+  #beta_seq <- c(theta_int[2])
+  
+  for (i in 1:iter) {
+    prop_sample <- rmvnorm(1, theta, prop_cov) %>% as.vector() # vector easy to work with
+    prop_theta <- dmvnorm(theta, prop_sample, prop_cov) # q(theta^{t-1} | theta^{star})
+    prop_theta_star <- dmvnorm(prop_sample, theta, prop_cov) # q(theta^{star} | theta^{t-1})
+    
+    post_theta_star <- unnorm_post(theta[1], theta[2], x, y, n)
+    post_theta <- unnorm_post(prop_sample[1], prop_sample[2], x, y, n)
+    
+    post_fraction <- exp(post_theta_star - post_theta)
+    prop_fraction <- prop_theta / prop_theta_star
+    accept_prob <- min(1, post_fraction * prop_fraction) # multiplication since calc prop above.
+    
+    unif <- runif(1, 0, 1)
+    if (unif <= accept_prob) {
+      theta <- prop_sample
+      theta_seq <- c(theta_seq, prop_sample)
+    } else if (unif > accept_prob) {
+      theta_seq <- c(theta_seq, theta)
+    } 
+  }
+  
+  theta_seq
+}
+
+
+```
+
+```{r}
+# Task 5 d 
+
+samples <- MH_alg(c(-2.5, 0), 10000, data_toxic$x, data_toxic$y) 
+
+samples %>% 
+  as.data.frame()
+
+
+```
+
+
+
+
+```{r, eval = FALSE}
+# testing area 
+
+
+MH_alg <- function(theta_init, iter, x, y, n = 5){
+  prop_cov <- matrix(c(1, 0, 0, 5), nrow = 2)
+  theta_seq <- c(theta_init) # prop_mean_seq
+  theta <- theta_init       # prop_mean
+  
+  for (i in 1:iter) {
+    prop_sample <- rmvnorm(1, theta, prop_cov) %>% as.vector() # vector easy to work with
+    prop_theta <- dmvnorm(theta, prop_sample, prop_cov) # q(theta^{t-1} | theta^{star})
+    prop_theta_star <- dmvnorm(prop_sample, theta, prop_cov) # q(theta^{star} | theta^{t-1})
+    
+    post_theta_star <- unnorm_post(theta[1], theta[2], x, y, n)
+    post_theta <- unnorm_post(prop_sample[1], prop_sample[2], x, y, n)
+    
+    post_fraction <- exp(post_theta_star - post_theta)
+    prop_fraction <- prop_theta / prop_theta_star
+    
+    if (is.na(prop_fraction) == TRUE) {
+      stop("prop_fraction is wrong")
+    } else if (is.na(post_fraction) == TRUE) {
+      stop("post_fraction is wrong")
+    }
+    
+    accept_prob <- min(1, post_fraction * prop_fraction) # multiplication since calc prop above.
+    
+    unif <- runif(1, 0, 1)
+    if (unif <= accept_prob) {
+      theta <- prop_sample
+      theta_seq <- c(theta_seq, prop_sample)
+    } else if (unif > accept_prob) {
+      theta_seq <- c(theta_seq, theta)
+    } 
+  }
+  
+  theta_seq
+}
 ```
 
