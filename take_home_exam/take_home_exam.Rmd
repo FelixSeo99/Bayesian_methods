@@ -121,8 +121,8 @@ MH_alg <- function(theta_init, iter, x, y, n = 5){
     prop_theta <- dmvnorm(theta, prop_sample, prop_cov) # q(theta^{t-1} | theta^{star})
     prop_theta_star <- dmvnorm(prop_sample, theta, prop_cov) # q(theta^{star} | theta^{t-1})
     
-    post_theta_star <- unnorm_post(theta[1], theta[2], x, y, n)
-    post_theta <- unnorm_post(prop_sample[1], prop_sample[2], x, y, n)
+    post_theta_star <- unnorm_post(prop_sample[1], prop_sample[2], x, y, n)
+    post_theta <- unnorm_post(theta[1], theta[2], x, y, n)
     
     post_fraction <- exp(post_theta_star - post_theta)
     prop_fraction <- prop_theta / prop_theta_star
@@ -146,5 +146,8 @@ MH_alg <- function(theta_init, iter, x, y, n = 5){
   
   theta_seq
 }
+
+MH_alg(c(-2.5, 0), 3000, data_toxic$x, data_toxic$y)
+
 ```
 
