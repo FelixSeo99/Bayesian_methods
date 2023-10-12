@@ -59,20 +59,22 @@ data.frame(
 
 # outputs a vector of sequences of theta as 
 # c(theta_0, theta_1, ...) = c(alpha_0, beta_0, alpha_1, beta_1, ...).
-MH_alg <- function(theta_init, iter, x, y, n = 5){
+MH_alg <- function(alpha_init, beta_init, x, y, n = 5, iter){
   prop_cov <- matrix(c(1, 0, 0, 5), nrow = 2)
-  theta_seq <- c(theta_init) # prop_mean_seq
-  theta <- theta_init       # prop_mean
-  #alpha_seq <- c(theta_init[1])
-  #beta_seq <- c(theta_int[2])
+  #theta_seq <- c(theta_init)
+  #theta <- theta_init     
+  alpha <- alpha_init
+  beta <- beta_init
+  alpha_seq <- c(alpha_init)
+  beta_seq <- c(beta_init)
   
   for (i in 1:iter) {
-    prop_sample <- rmvnorm(1, theta, prop_cov) %>% as.vector() # vector easy to work with
-    prop_theta <- dmvnorm(theta, prop_sample, prop_cov) # q(theta^{t-1} | theta^{star})
-    prop_theta_star <- dmvnorm(prop_sample, theta, prop_cov) # q(theta^{star} | theta^{t-1})
+    prop_sample <- rmvnorm(1, c(alpha, beta), prop_cov) %>% as.vector() # vector easy to work with
+    prop_theta <- dmvnorm(c(alpha, beta), prop_sample, prop_cov) # q(theta^{t-1} | theta^{star})
+    prop_theta_star <- dmvnorm(prop_sample, c(alpha, beta), prop_cov) # q(theta^{star} | theta^{t-1})
     
-    post_theta_star <- unnorm_post(theta[1], theta[2], x, y, n)
-    post_theta <- unnorm_post(prop_sample[1], prop_sample[2], x, y, n)
+    post_theta_star <- unnorm_post(prop_sample[1], prop_sample[2] , x, y, n)
+    post_theta <- unnorm_post(alpha, beta, x, y, n) # f(theta^{t-1} | x)
     
     post_fraction <- exp(post_theta_star - post_theta)
     prop_fraction <- prop_theta / prop_theta_star
@@ -80,14 +82,17 @@ MH_alg <- function(theta_init, iter, x, y, n = 5){
     
     unif <- runif(1, 0, 1)
     if (unif <= accept_prob) {
-      theta <- prop_sample
-      theta_seq <- c(theta_seq, prop_sample)
+      alpha <- prop_sample[1]
+      beta <- prop_sample[2]
+      alpha_seq <- c(alpha_seq, prop_sample[1])
+      beta_seq <- c(beta_seq, prop_sample[2])
     } else if (unif > accept_prob) {
-      theta_seq <- c(theta_seq, theta)
+      alpha_seq <- c(alpha_seq, alpha)
+      beta_seq <- c(beta_seq, beta)
     } 
   }
-  
-  theta_seq
+
+  data.frame("alpha" = alpha_seq, "beta" = beta_seq)
 }
 
 
@@ -96,10 +101,23 @@ MH_alg <- function(theta_init, iter, x, y, n = 5){
 ```{r}
 # Task 5 d 
 
-samples <- MH_alg(c(-2.5, 0), 10000, data_toxic$x, data_toxic$y) 
+samples <- MH_alg(-2.5, 0, data_toxic$x, data_toxic$y, iter = 10000) 
 
 samples %>% 
-  as.data.frame()
+  {mutate(., time = seq(0, length(.$alpha) - 1, 1))} %>% 
+  ggplot(aes(x = time, y = alpha)) +
+  geom_line()
+
+samples %>% 
+  {mutate(., time = seq(0, length(.$alpha) - 1, 1))} %>% 
+  ggplot(aes(x = time, y = beta)) +
+  geom_line()
+
+samples %>% 
+  pivot_longer(cols = everything(), names_to = c("parameter"), values_to = "value") %>% 
+  ggplot(aes(x = value, y = after_stat(density))) +
+  geom_histogram(bins = 100, color = "black", fill = "white") + 
+  facet_wrap(vars(parameter), scales = "free_x")
 
 
 ```
@@ -149,5 +167,24 @@ MH_alg <- function(theta_init, iter, x, y, n = 5){
 
 MH_alg(c(-2.5, 0), 3000, data_toxic$x, data_toxic$y)
 
+
+#####################
+
+
+test_alpha <- samples %>% select(alpha) %>% slice_sample(n = 2432) %>% {.$alpha}
+test_beta <- samples %>% select(beta) %>% slice_sample(n = 2432) %>% {.$beta}
+
+data.frame(
+  "alpha" = rep(seq_alpha, each = length(seq_beta)),
+  "beta" = rep(seq_beta, times = length(seq_alpha))
+) %>% 
+  mutate(
+    un_post = mapply(function(x, y) unnorm_post(x, y, c(1,1), c(1,1), 5),
+                     alpha, 
+                     beta)
+  ) %>% # our function not vectorized, not work with mutate.
+  ggplot(aes(x = alpha, y = beta, z = un_post)) +
+  geom_contour_filled() +
+  geom_point(data = NULL, aes(x = test_alpha, y = test_beta))
 ```
 
