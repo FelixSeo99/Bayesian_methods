@@ -12,11 +12,14 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(mvtnorm)
 library(tidyverse)
+library(rstan)
 ```
 
 ```{r}
 # loading the data
 data_toxic <- read_delim("../data/toxic.csv", delim = ",")
+data_returns <- read_delim("../data/returns.csv", delim = ",") %>% 
+  mutate(across(contains("Stock"), ~as.numeric(.x)))
 
 ```
 
@@ -187,5 +190,46 @@ data.frame(
   ggplot(aes(x = alpha, y = beta, z = un_post)) +
   geom_contour_filled() +
   geom_point(data = NULL, aes(x = test_alpha, y = test_beta))
+```
+
+```{r}
+# Task 6 a
+
+P_alpha <- matrix(c(1, 0.5, 0.5, 0, 0, 0, 
+                    0.5, 1, 0.5, 0, 0, 0, 
+                    0.5, 0.5, 1, 0, 0, 0,
+                    rep(0, 18)
+                  ),
+                  nrow = 6) 
+
+P_beta <- matrix(c(0, 0, 0, 0, 0, 0, 
+                   0, 0, 0, 0, 0, 0,
+                   0, 0, 0, 0, 0, 0,
+                   0, 0, 0, 1, 0.5, 0.5, 
+                   0, 0, 0, 0.5, 1, 0.5,
+                   0, 0, 0, 0.5, 0.5, 1
+                  ),
+                  nrow = 6)
+
+data_stock <- data_returns %>% select(!Date) %>% as.matrix()
+
+model_data <- list(
+  "N" = length(data_returns$Date),
+  "K" = 6,
+  "Y" = data_stock,
+  "vec_1" = rep(1, 6),
+  "identity_mat" = diag(1, 6), 
+  "P_alpha" = P_alpha * 100, 
+  "P_beta" = P_beta * 100
+)
+
+model_fit <- stan(
+  "stan_model_6.stan",
+  data = model_data,
+  chains = 1, 
+  iter = 500, 
+  warmup = 100,
+  cores = 4)
+
 ```
 
