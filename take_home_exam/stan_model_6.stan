@@ -10,8 +10,8 @@ data {
 }
 
 parameters {
-  real alpha;
-  real beta;
+  real<lower = 0> alpha;
+  real<lower = 0> beta;
   real mu_0;
   real sigma;
   vector[K] mu;
