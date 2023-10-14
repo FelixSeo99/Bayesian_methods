@@ -195,6 +195,36 @@ data.frame(
 ```{r}
 # Task 6 a
 
+data_returns <- data_returns %>% 
+  select(-Date) %>% 
+  pivot_longer(everything(), names_to = "stock", values_to = "returns") 
+
+# Density histograms for the stocks  
+data_returns %>% 
+  ggplot(aes(x = returns, y = after_stat(density))) +
+  geom_histogram(bins = 100) + 
+  facet_wrap(~ stock)
+
+data_returns %>% 
+  ggplot(aes(x = stock, y = returns)) +
+  geom_boxplot()
+  
+data_returns %>% 
+  group_by(stock) %>% 
+  summarise(
+    mean = mean(returns), 
+    variance = var(returns), 
+    median = median(returns)
+  )
+
+```
+
+
+
+
+```{r}
+# Task 6 b
+
 P_alpha <- matrix(c(1, 0.5, 0.5, 0, 0, 0, 
                     0.5, 1, 0.5, 0, 0, 0, 
                     0.5, 0.5, 1, 0, 0, 0,
@@ -226,10 +256,15 @@ model_data <- list(
 model_fit <- stan(
   "stan_model_6.stan",
   data = model_data,
-  chains = 1, 
-  iter = 1000, 
-  warmup = 200,
+  chains = 4, 
+  iter = 5000, 
+  warmup = 1000,
   cores = 4)
+
+```
+
+```{r}
+model_fit
 
 ```
 
