@@ -31,6 +31,7 @@ model {
 }
 
 generated quantities {
-  vector[K] y_rep = multi_normal_rng(mu, cov_mat);
+  vector[K] y_rep;
+  y_rep = multi_normal_rng(mu, cov_mat);
 }
 

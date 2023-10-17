@@ -128,9 +128,9 @@ samples %>%
 
 
 ```{r, eval = FALSE}
-# testing area 
+# testing area partly
 
-
+#######################
 MH_alg <- function(theta_init, iter, x, y, n = 5){
   prop_cov <- matrix(c(1, 0, 0, 5), nrow = 2)
   theta_seq <- c(theta_init) # prop_mean_seq
@@ -250,16 +250,28 @@ model_data <- list(
   "identity_mat" = diag(1, 6), 
   "P_alpha" = P_alpha * 100, 
   "P_beta" = P_beta * 100
-)
+  )
 
 model_fit <- stan(
   "stan_model_6.stan",
   data = model_data,
   chains = 4, 
-  iter = 1000, 
-  warmup = 200,
-  cores = 2)
+  iter = 5000, 
+  warmup = 2000,
+  cores = 4
+  )
 
+sampling(stan_model("stan_model_6.stan"), data = list(
+  "N" = length(data_returns$Date),
+  "K" = 6,
+  "Y" = data_stock,
+  "vec_1" = rep(1, 6),
+  "identity_mat" = diag(1, 6), 
+  "P_alpha" = P_alpha * 100, 
+  "P_beta" = P_beta * 100
+  ),
+  iter = 10000
+)
 ```
 
 ```{r}
@@ -267,13 +279,13 @@ model_fit <- stan(
 #  as.data.frame() %>% 
   
 
-test <- rstan::extract(model_fit) 
+traceplot(model_fit, pars = "y_rep")
 
 rmvnorm(
-  1000, 
-  mean = c(-0.07, -0.04, 0.04, -0.03, -0.06, 0.02), 
+  10000, 
+  mean = 0.1*c(-0.07, -0.06, 0.03, -0.02, -0.05, 0.03), 
   sigma = matrix(
-    c(0.56, 0.28, 0.28, 0, 0, 0, 
+    0.01*c(0.56, 0.28, 0.28, 0, 0, 0, 
       0.28, 0.56, 0.28, 0, 0, 0,
       0.28, 0.28, 0.56, 0, 0, 0,
       0, 0, 0, 0.6, 0.3, 0.3, 
@@ -283,9 +295,7 @@ rmvnorm(
     nrow = 6
   )
 ) %>% 
-  as.data.frame() 
-
-
-traceplot(model_fit, pars = "y_rep")
+  as.data.frame() %>% 
+  mutate(mean1 = mean(V1), var1 = var(V1))
 ```
 
