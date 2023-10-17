@@ -42,19 +42,18 @@ unnorm_post <- function(alpha, beta, x, y, n){
 seq_alpha <- seq(-2.5, 5, 0.1)
 seq_beta <- seq(-1, 30, 1)
 
+
 data.frame(
   "alpha" = rep(seq_alpha, each = length(seq_beta)),
   "beta" = rep(seq_beta, times = length(seq_alpha))
 ) %>% 
   mutate(
-    un_post = mapply(function(x, y) unnorm_post(x, y, c(1,1), c(1,1), 5),
+    un_post = mapply(function(x, y) unnorm_post(x, y, data_toxic$x, data_toxic$y, 5),
                      alpha, 
                      beta)
   ) %>% # our function not vectorized, not work with mutate.
   ggplot(aes(x = alpha, y = beta, z = un_post)) +
   geom_contour_filled()
-
-
 ```
 
 ```{r}
@@ -183,7 +182,7 @@ data.frame(
   "beta" = rep(seq_beta, times = length(seq_alpha))
 ) %>% 
   mutate(
-    un_post = mapply(function(x, y) unnorm_post(x, y, c(1,1), c(1,1), 5),
+    un_post = mapply(function(x, y) unnorm_post(x, y, data_toxic$x, data_toxic$y, 5),
                      alpha, 
                      beta)
   ) %>% # our function not vectorized, not work with mutate.
@@ -195,21 +194,21 @@ data.frame(
 ```{r}
 # Task 6 a
 
-data_returns <- data_returns %>% 
+data_returns_2 <- data_returns %>% 
   select(-Date) %>% 
   pivot_longer(everything(), names_to = "stock", values_to = "returns") 
 
 # Density histograms for the stocks  
-data_returns %>% 
+data_returns_2 %>% 
   ggplot(aes(x = returns, y = after_stat(density))) +
   geom_histogram(bins = 100) + 
   facet_wrap(~ stock)
 
-data_returns %>% 
+data_returns_2 %>% 
   ggplot(aes(x = stock, y = returns)) +
   geom_boxplot()
   
-data_returns %>% 
+data_returns_2 %>% 
   group_by(stock) %>% 
   summarise(
     mean = mean(returns), 
@@ -257,14 +256,36 @@ model_fit <- stan(
   "stan_model_6.stan",
   data = model_data,
   chains = 4, 
-  iter = 5000, 
-  warmup = 1000,
-  cores = 4)
+  iter = 1000, 
+  warmup = 200,
+  cores = 2)
 
 ```
 
 ```{r}
-model_fit
+#rstan::extract(model_fit, pars = c("mu", "cov_mat")) %>% 
+#  as.data.frame() %>% 
+  
 
+test <- rstan::extract(model_fit) 
+
+rmvnorm(
+  1000, 
+  mean = c(-0.07, -0.04, 0.04, -0.03, -0.06, 0.02), 
+  sigma = matrix(
+    c(0.56, 0.28, 0.28, 0, 0, 0, 
+      0.28, 0.56, 0.28, 0, 0, 0,
+      0.28, 0.28, 0.56, 0, 0, 0,
+      0, 0, 0, 0.6, 0.3, 0.3, 
+      0, 0, 0, 0.3, 0.6, 0.3,
+      0, 0, 0, 0.3, 0.3, 0.6 
+    ),
+    nrow = 6
+  )
+) %>% 
+  as.data.frame() 
+
+
+traceplot(model_fit, pars = "y_rep")
 ```
 

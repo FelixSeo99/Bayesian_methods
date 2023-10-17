@@ -27,6 +27,10 @@ model {
   mu ~ multi_normal(mu_0 * vec_1, sigma * identity_mat);
   cov_mat ~ inv_wishart(100, alpha * P_alpha + beta * P_beta);
   
-  Y[K, ] ~ multi_normal(mu, cov_mat);
+  Y[K] ~ multi_normal(mu, cov_mat);
+}
+
+generated quantities {
+  vector[K] y_rep = multi_normal_rng(mu, cov_mat);
 }
 
