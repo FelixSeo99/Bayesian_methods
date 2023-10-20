@@ -2,11 +2,13 @@
 title: "Untitled"
 author: "Felix Seo"
 date: "2023-10-11"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
 ```
 
 ```{r}
@@ -23,6 +25,7 @@ data_returns <- read_delim("../data/returns.csv", delim = ",") %>%
 
 ```
 
+We can make a contour plot of the unnormalized posterior in the range $\alpha \in [-2.5, 5]$ and $\beta \in [-1, 30]$. 
 
 ```{r}
 # Task 5 b
@@ -55,6 +58,18 @@ data.frame(
   ggplot(aes(x = alpha, y = beta, z = un_post)) +
   geom_contour_filled()
 ```
+
+We will now implement a Metropolis-Hastings (MH) sampler to sample from the posterior distribution. We will use a multivariate normal distribution as proposal distribution such that 
+\begin{equation*}
+  (\alpha_t, \beta_t) | (\alpha_{t-1}, \beta_{t-1}) \sim N((\alpha_{t-1}, \beta_{t-1}), \Sigma_t), \quad 
+  \Sigma_t 
+  =
+  \begin{pmatrix}
+  \sigma^2_\alpha & 0 \\
+  0 & \sigma^2_\beta
+  \end{pmatrix}.
+\end{equation*}
+Let $\sigma^2_\alpha = 1$ and $\sigma^2_\beta = 5$. We will sample 10000 draws from the posterior using our MH sampler starting with $(\alpha_0, \beta_0) = (-2.5, 1)$. First we will begin with the traceplots for the parameters.   
 
 ```{r}
 # Task 5 c
@@ -100,30 +115,52 @@ MH_alg <- function(alpha_init, beta_init, x, y, n = 5, iter){
 
 ```
 
-```{r}
-# Task 5 d 
+```{r, fig.cap="dafd fd f d f df"}
+# Task 5d traceplots 
 
 samples <- MH_alg(-2.5, 0, data_toxic$x, data_toxic$y, iter = 10000) 
+samples2 <- MH_alg(-0, 2.5, data_toxic$x, data_toxic$y, iter = 10000) %>% 
+  mutate(group = 2)
 
 samples %>% 
-  {mutate(., time = seq(0, length(.$alpha) - 1, 1))} %>% 
-  ggplot(aes(x = time, y = alpha)) +
-  geom_line()
+  mutate(group = 1) %>% 
+  bind_rows(samples2) %>%
+  mutate(time = rep(seq(0, 10000), times = 2)) %>% 
+  pivot_longer(cols = c("alpha", "beta"), names_to = "parameter", values_to = "value") %>% 
+  mutate(group = as.factor(group)) %>% 
+  ggplot(aes(x = time, y = value, color = group)) +
+  geom_line() +
+  facet_wrap(~parameter)
+  
+  
 
-samples %>% 
-  {mutate(., time = seq(0, length(.$alpha) - 1, 1))} %>% 
-  ggplot(aes(x = time, y = beta)) +
-  geom_line()
+#samples %>% 
+#  {mutate(., time = seq(0, length(.$alpha) - 1, 1))} %>% 
+#  ggplot(aes(x = time, y = alpha)) +
+#  geom_line()
+
+#samples %>% 
+#  {mutate(., time = seq(0, length(.$alpha) - 1, 1))} %>% 
+#  ggplot(aes(x = time, y = beta)) +
+#  geom_line()
+
+samples %>%
+  {mutate(., time = seq(0, length(.$alpha) - 1, 1))} %>%
+  pivot_longer(cols = c("alpha", "beta"), names_to = "parameter", values_to = "value") %>% 
+  ggplot(aes(x = time, y = value)) +
+  geom_line() +
+  facet_wrap(~parameter, scales = "fixed")
+```
+
+```{r}
+# Task 5d marginal distribution of the parameters 
 
 samples %>% 
   pivot_longer(cols = everything(), names_to = c("parameter"), values_to = "value") %>% 
   ggplot(aes(x = value, y = after_stat(density))) +
   geom_histogram(bins = 100, color = "black", fill = "white") + 
   facet_wrap(vars(parameter), scales = "free_x")
-
-
 ```
-
 
 
 
@@ -191,7 +228,7 @@ data.frame(
   geom_point(data = NULL, aes(x = test_alpha, y = test_beta))
 ```
 
-```{r}
+```{r, eval = FALSE}
 # Task 6 a
 
 data_returns_2 <- data_returns %>% 
@@ -221,7 +258,7 @@ data_returns_2 %>%
 
 
 
-```{r}
+```{r, eval = FALSE}
 # Task 6 b
 
 P_alpha <- matrix(c(1, 0.5, 0.5, 0, 0, 0, 
@@ -274,7 +311,7 @@ sampling(stan_model("stan_model_6.stan"), data = list(
 )
 ```
 
-```{r}
+```{r, eval = FALSE}
 #rstan::extract(model_fit, pars = c("mu", "cov_mat")) %>% 
 #  as.data.frame() %>% 
   
