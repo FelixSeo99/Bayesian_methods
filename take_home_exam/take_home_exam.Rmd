@@ -152,6 +152,8 @@ samples %>%
   facet_wrap(~parameter, scales = "fixed")
 ```
 
+We can see from the plot that $\alpha$ has a smaller spread that $\beta$. Visually it is quite difficult to see if convergence have been attained. Trying many different starting points for the parameters and plotting them to see if the chains visually coincide. A burn-in phase is desired where we remove draws from the begining of the chains to not be able to distinguish where each chain has started. Still with this we should use a quantitative statistic to infer whether convergence is reached or not.  
+
 ```{r}
 # Task 5d marginal distribution of the parameters 
 
