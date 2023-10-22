@@ -3,8 +3,8 @@ title: "Untitled"
 author: "Felix Seo"
 date: "2023-10-11"
 output:
-  pdf_document: default
-  html_document: default
+  pdf_document: 
+    extra_dependencies: ["amsmath"]
 ---
 
 ```{r setup, include=FALSE}
@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
 library(mvtnorm)
 library(tidyverse)
 library(rstan)
+library(knitr)
 ```
 
 ```{r}
@@ -24,6 +25,8 @@ data_returns <- read_delim("../data/returns.csv", delim = ",") %>%
   mutate(across(contains("Stock"), ~as.numeric(.x)))
 
 ```
+
+# Task 5
 
 We can make a contour plot of the unnormalized posterior in the range $\alpha \in [-2.5, 5]$ and $\beta \in [-1, 30]$. 
 
@@ -117,6 +120,7 @@ MH_alg <- function(alpha_init, beta_init, x, y, n = 5, iter){
 
 ```{r, fig.cap="dafd fd f d f df"}
 # Task 5d traceplots 
+set.seed(990108)
 
 samples <- MH_alg(-2.5, 0, data_toxic$x, data_toxic$y, iter = 10000) 
 samples2 <- MH_alg(0, 2.5, data_toxic$x, data_toxic$y, iter = 10000) %>% 
@@ -155,6 +159,8 @@ samples %>%
 We can see from the plot that $\alpha$ has a smaller spread that $\beta$. Visually it is quite difficult to see if convergence have been attained. We should also try many different starting points for the parameters and plotting them to see if the chains visually coincide. A burn-in phase is desired where we remove draws from the beginning of the chains to not be able to distinguish where each chain has started. Still with this we should use a quantitative statistic to infer whether convergence is reached or not. Since if we make traceplots for 6 different starting values of $\alpha$ and $\beta$ we can see the need for quantative methods. 
 
 ```{r}
+set.seed(990108)
+
 samples2 <- MH_alg(0, 2.5, data_toxic$x, data_toxic$y, iter = 10000) %>% 
   mutate(group = 2)
 samples3 <- MH_alg(1, 7, data_toxic$x, data_toxic$y, iter = 10000) %>% 
@@ -177,7 +183,7 @@ samples %>%
   facet_wrap(~parameter)
 ```
 
-In Figure we can see the problem that it is quite difficult to really be sure of convergence by visual analysis. Let us now look at the marginal distribution of the parameters. 
+In Figure we can see that it is quite difficult to really be sure of convergence by visual analysis. Let us now look at the marginal distribution of the parameters. 
 
 ```{r}
 # Task 5d marginal distribution of the parameters 
@@ -189,7 +195,28 @@ samples %>%
   facet_wrap(vars(parameter), scales = "free_x")
 ```
 
-The marginal posterior distributions can be seen in Figure ?? for the parameters. 
+The marginal posterior distributions can be seen in Figure ?? for the parameters. The two parameters does not seem to follow the same distribution. It would not be wrong to say that the marginal posterior distribution for $\alpha$ seems to follow a normal distribution. For the parameter $\beta$ however, it has more of a tail and and is not symmetric. Let us now plot a sample of bivariate draws from our algorithm and plot to the contour plot in part b.  
+
+```{r}
+set.seed(990108)
+
+test_alpha <- samples %>% select(alpha) %>% slice_sample(n = 2432) %>% {.$alpha}
+test_beta <- samples %>% select(beta) %>% slice_sample(n = 2432) %>% {.$beta}
+
+data.frame(
+  "alpha" = rep(seq_alpha, each = length(seq_beta)),
+  "beta" = rep(seq_beta, times = length(seq_alpha))
+) %>% 
+  mutate(
+    un_post = mapply(function(x, y) unnorm_post(x, y, data_toxic$x, data_toxic$y, 5),
+                     alpha, 
+                     beta)
+  ) %>% # our function not vectorized, not work with mutate.
+  ggplot(aes(x = alpha, y = beta, z = un_post)) +
+  geom_contour_filled() +
+  geom_point(data = NULL, aes(x = test_alpha, y = test_beta))
+```
+
 
 ```{r, eval = FALSE}
 # testing area partly
@@ -237,7 +264,6 @@ MH_alg(c(-2.5, 0), 3000, data_toxic$x, data_toxic$y)
 
 #####################
 
-
 test_alpha <- samples %>% select(alpha) %>% slice_sample(n = 2432) %>% {.$alpha}
 test_beta <- samples %>% select(beta) %>% slice_sample(n = 2432) %>% {.$beta}
 
@@ -255,35 +281,78 @@ data.frame(
   geom_point(data = NULL, aes(x = test_alpha, y = test_beta))
 ```
 
-```{r, eval = FALSE}
+# Task 6
+
+In this part we are given a data set which consists of monthly returns of 6 stocks from two sectors: Information Technology (IT) and Energy. The returns $\textbf{Y}$ are assumed to follow a multivariate normal distribution 
+\begin{equation*}
+  \textbf{Y}| \boldsymbol{\mu}, \boldsymbol{\Sigma} \sim N(\boldsymbol{\mu}, \boldsymbol{\Sigma})
+\end{equation*}
+where
+$$
+\boldsymbol{\mu}|\mu_0, \sigma^2 \sim N(\mu_0 \boldsymbol{1}, \sigma^2 \boldsymbol{I}),
+$$
+with $\mu_0 \sim N(0, 1)$ and $\sigma^2 \sim$Inv-Gamma(1, 1). The covariance matrix $\boldsymbol{\Sigma}$ is modeled as 
+$$
+\boldsymbol{\Sigma}|\alpha, \beta \sim \text{Inv-Wishart}(\nu_0 \textbf{P}_0, \nu_0),
+$$
+where $\nu_0 = 100$ and 
+$$
+\textbf{P}_0 = 
+\begin{pmatrix}
+\alpha \textbf{P}_A & \boldsymbol{0} \\
+\boldsymbol{0} & \beta \textbf{P}_B  
+\end{pmatrix}
+, \quad
+\textbf{P}_A
+= 
+\textbf{P}_B
+=
+\begin{pmatrix}
+1 & 0.5 & 0.5 \\
+0.5 & 1 & 0.5 \\
+0.5 & 0.5 & 1
+\end{pmatrix} 
+\\
+\alpha \sim N(0, 1), \quad \beta \sim N(0,1).
+$$
+First we will provide some summary statistics for the returns of each stock. 
+
+```{r}
 # Task 6 a
 
 data_returns_2 <- data_returns %>% 
   select(-Date) %>% 
   pivot_longer(everything(), names_to = "stock", values_to = "returns") 
 
-# Density histograms for the stocks  
-data_returns_2 %>% 
-  ggplot(aes(x = returns, y = after_stat(density))) +
-  geom_histogram(bins = 100) + 
-  facet_wrap(~ stock)
-
-data_returns_2 %>% 
-  ggplot(aes(x = stock, y = returns)) +
-  geom_boxplot()
-  
 data_returns_2 %>% 
   group_by(stock) %>% 
   summarise(
     mean = mean(returns), 
     variance = var(returns), 
     median = median(returns)
-  )
-
+  ) %>% 
+  kable(align = "c")
 ```
 
+We can see in Table ?? that the mean is quite small but similar for all stocks. Stock 1 and 3 in the IT sector have negative mean bu so have stock 3 in the Energy sector. The variance is quite similar between the stocks in the same sector but with higher variance for IT stocks than Energy stocks. The median are all positive except for IT stock 1 and 3. Let us also create boxplots for the different stocks.
 
+```{r}
+data_returns_2 %>% 
+  ggplot(aes(x = stock, y = returns)) +
+  geom_boxplot()
+```
 
+In Figure ?? we can see the corresponding boxplots for the stocks. We note that there are some extreme cases. Most notably Energy stock 3 and IT stock 1 have some very big negative returns. Only IT stock 3 have an extreme case where the returns are positive up to about 0.25. Now to represent the possible distributions of the stocks we will create histograms. 
+
+```{r}
+# histograms for the stocks  
+data_returns_2 %>% 
+  ggplot(aes(x = returns, y = after_stat(density))) +
+  geom_histogram(bins = 100) + 
+  facet_wrap(~ stock)
+```
+
+From Figure ?? we can make some assessment on the validity of our model setup. All stocks seem to follow a unimodal distribution with mean close to 0. Approximating the returns with a multivariate distribution seems justified.   
 
 ```{r, eval = FALSE}
 # Task 6 b
@@ -362,4 +431,23 @@ rmvnorm(
   as.data.frame() %>% 
   mutate(mean1 = mean(V1), var1 = var(V1))
 ```
+
+```{r}
+# testing area
+set.seed(990108)
+
+P_0 <- rnorm(1) * P_alpha + rnorm(1) * P_beta   
+
+test <- LaplacesDemon::rinvwishart(100, 100 * P_0)  
+
+rmvnorm(
+  10000, 
+  mean = c(-0.07, -0.06, 0.03, -0.02, -0.05, 0.03), 
+  test
+) %>% 
+  as.data.frame() %>% 
+  mutate(mean1 = mean(V1), var1 = var(V1))
+  
+```
+
 
