@@ -11,6 +11,10 @@ output:
 knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
 ```
 
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\Var}{\mathrm{Var}}
+
 ```{r}
 library(mvtnorm)
 library(tidyverse)
@@ -352,7 +356,21 @@ data_returns_2 %>%
   facet_wrap(~ stock)
 ```
 
-From Figure ?? we can make some assessment on the validity of our model setup. All stocks seem to follow a unimodal distribution with mean close to 0. Approximating the returns with a multivariate distribution seems justified.   
+From Figure ?? we can make some assessment on the validity of our model setup. All stocks seem to follow a unimodal distribution with mean close to 0. Approximating the returns with a multivariate distribution seems justified. Now we turn to the model setup in \texttt{Rstan}. One thing to note is that we need to restrict the output of the parameters $\alpha$ and $\beta$ to be non-negative. This is since we in the inverse-Wishart distribution need a positive definite matrix as the scale parameter (the $\nu_0 \textbf{P}_0$ in the above). Other than that there is nothing we need to keep in mind and can just define the model in \texttt{Rstan} following the model setup before.
+
+We can take a closer look at the way we define the covariance matrix $\boldsymbol{\Sigma}$. The way we define $\textbf{P}_0$ makes us inclined that we want no correlation between the different sectors. However, have in mind that we do not know the properties of the output for the inverse-Wishart distribution with our parameterization. But looking at a table of distributions (see \textbf{BAYESIAN METHODS}) for $V \sim$ Inv-Wishart$(\boldsymbol{\Omega}, \nu)$ where $\boldsymbol{\Omega}$ is a $k \times k$ symmetric and positive definite matrix, we have that the expected value of matrix element $V_{ij}$ is 
+$$
+\E(V_{ij}) = \frac{1}{\nu - k - 1} \Omega_{ij}^{-1}.
+$$
+We will not derive the inverse of $\boldsymbol{\Omega}$ but we can say something about the expected value since in our case we have $\boldsymbol{\Omega} = \nu_0 \textbf{P}_0$. Our scale matrix is a diagonal block matrix which means that its inverse is the inverse of each diagonal block. Since each diagonal block, $\alpha\textbf{P}_A$ and $\beta\textbf{P}_B$, is positive definite the inverse exists for each diagonal block and will also be positive definite. So with this we know that the matrix $\boldsymbol{\Omega}^{-1}$ will have zeroes on the upper right and lower left submatrix, namely 
+$$
+\textbf{P}_0^{-1} = 
+\begin{pmatrix}
+(\alpha \textbf{P}_A)^{-1} & \boldsymbol{0} \\
+\boldsymbol{0} & (\beta \textbf{P}_B)^-{1}  
+\end{pmatrix}.
+$$
+Thus the covariance elements in $\boldsymbol{\Sigma}$ will have expected value equal to 0. So in some way we get closer to having uncorrelated sectors, but we do not know the variances of the elements in $\boldsymbol{\Sigma}$ but hopefully it is quite small.  
 
 ```{r, eval = FALSE}
 # Task 6 b
@@ -412,7 +430,7 @@ sampling(stan_model("stan_model_6.stan"), data = list(
 #  as.data.frame() %>% 
   
 
-traceplot(model_fit, pars = "y_rep")
+traceplot(model_fit, pars = "mu")
 
 rmvnorm(
   10000, 
@@ -432,7 +450,7 @@ rmvnorm(
   mutate(mean1 = mean(V1), var1 = var(V1))
 ```
 
-```{r}
+```{r, eval=FALSE}
 # testing area
 set.seed(990108)
 
