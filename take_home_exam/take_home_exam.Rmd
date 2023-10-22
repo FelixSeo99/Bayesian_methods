@@ -119,7 +119,7 @@ MH_alg <- function(alpha_init, beta_init, x, y, n = 5, iter){
 # Task 5d traceplots 
 
 samples <- MH_alg(-2.5, 0, data_toxic$x, data_toxic$y, iter = 10000) 
-samples2 <- MH_alg(-0, 2.5, data_toxic$x, data_toxic$y, iter = 10000) %>% 
+samples2 <- MH_alg(0, 2.5, data_toxic$x, data_toxic$y, iter = 10000) %>% 
   mutate(group = 2)
 
 samples %>% 
@@ -152,7 +152,32 @@ samples %>%
   facet_wrap(~parameter, scales = "fixed")
 ```
 
-We can see from the plot that $\alpha$ has a smaller spread that $\beta$. Visually it is quite difficult to see if convergence have been attained. Trying many different starting points for the parameters and plotting them to see if the chains visually coincide. A burn-in phase is desired where we remove draws from the begining of the chains to not be able to distinguish where each chain has started. Still with this we should use a quantitative statistic to infer whether convergence is reached or not.  
+We can see from the plot that $\alpha$ has a smaller spread that $\beta$. Visually it is quite difficult to see if convergence have been attained. We should also try many different starting points for the parameters and plotting them to see if the chains visually coincide. A burn-in phase is desired where we remove draws from the beginning of the chains to not be able to distinguish where each chain has started. Still with this we should use a quantitative statistic to infer whether convergence is reached or not. Since if we make traceplots for 6 different starting values of $\alpha$ and $\beta$ we can see the need for quantative methods. 
+
+```{r}
+samples2 <- MH_alg(0, 2.5, data_toxic$x, data_toxic$y, iter = 10000) %>% 
+  mutate(group = 2)
+samples3 <- MH_alg(1, 7, data_toxic$x, data_toxic$y, iter = 10000) %>% 
+  mutate(group = 3)
+samples4 <- MH_alg(2.5, 13, data_toxic$x, data_toxic$y, iter = 10000) %>% 
+  mutate(group = 4)
+samples5 <- MH_alg(4, 20, data_toxic$x, data_toxic$y, iter = 10000) %>% 
+  mutate(group = 5)
+samples6 <- MH_alg(5, 26, data_toxic$x, data_toxic$y, iter = 10000) %>% 
+  mutate(group = 6)
+
+samples %>% 
+  mutate(group = 1) %>% 
+  bind_rows(samples2, samples3, samples4, samples5, samples6) %>%
+  mutate(time = rep(seq(0, 10000), times = 6)) %>% 
+  pivot_longer(cols = c("alpha", "beta"), names_to = "parameter", values_to = "value") %>% 
+  mutate(group = as.factor(group)) %>% 
+  ggplot(aes(x = time, y = value, color = group)) +
+  geom_line() +
+  facet_wrap(~parameter)
+```
+
+In Figure we can see the problem that it is quite difficult to really be sure of convergence by visual analysis. Let us now look at the marginal distribution of the parameters. 
 
 ```{r}
 # Task 5d marginal distribution of the parameters 
@@ -164,7 +189,7 @@ samples %>%
   facet_wrap(vars(parameter), scales = "free_x")
 ```
 
-
+The marginal posterior distributions can be seen in Figure ?? for the parameters. 
 
 ```{r, eval = FALSE}
 # testing area partly
