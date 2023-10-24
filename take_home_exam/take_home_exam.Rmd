@@ -415,25 +415,24 @@ model_fit <- stan(
   "stan_model_6.stan",
   data = model_data,
   chains = 4, 
-  iter = 10000, 
-  warmup = 5000,
+  iter = 20000, 
+  warmup = 10000,
   cores = 4
   )
 
-post_pred_samp <- sampling(stan_model("stan_model_6.stan"), data = list(
-  "N" = length(data_returns$Date),
-  "K" = 6,
-  "Y" = data_stock,
-  "vec_1" = rep(1, 6),
-  "identity_mat" = diag(1, 6), 
-  "P_alpha" = P_alpha * 100, 
-  "P_beta" = P_beta * 100
-  ),
-  chains = 1,
-  iter = 20000
-)
+#post_pred_samp <- sampling(stan_model("stan_model_6.stan"), data = list(
+#  "N" = length(data_returns$Date),
+#  "K" = 6,
+#  "Y" = data_stock,
+#  "vec_1" = rep(1, 6),
+#  "identity_mat" = diag(1, 6), 
+#  "P_alpha" = P_alpha * 100, 
+#  "P_beta" = P_beta * 100
+#  ),
+#  chains = 1,
+#  iter = 20000)
 
-rstan::extract(post_pred_samp, pars = "y_rep") %>% 
+rstan::extract(model_fit, pars = "y_rep") %>% 
   as.data.frame() %>% 
   rename(
     "Energy.Stock1" = "y_rep.1",
@@ -466,6 +465,8 @@ rstan::extract(post_pred_samp, pars = "y_rep") %>%
            
 ```
 
+As we can see the summary statistics in Table ?? differ from the ones we got in Table ??. We have larger mean, variances and median for all of the stocks. Some stocks have reversed sign of the means. So our model does not seem to be able to be able tp predict the returns of the stocks that well. This could be a consequence of our model specification where we may have not been able to capture the properties of the data. Let us now look at the convergence diagnostics of our model. 
+
 ```{r, eval = FALSE}
 #rstan::extract(model_fit, pars = c("mu", "cov_mat")) %>% 
 #  as.data.frame() %>% 
@@ -473,23 +474,33 @@ rstan::extract(post_pred_samp, pars = "y_rep") %>%
 
 traceplot(model_fit, pars = "mu")
 
-rmvnorm(
-  10000, 
-  mean = 0.1*c(-0.07, -0.06, 0.03, -0.02, -0.05, 0.03), 
-  sigma = matrix(
-    0.01*c(0.56, 0.28, 0.28, 0, 0, 0, 
-      0.28, 0.56, 0.28, 0, 0, 0,
-      0.28, 0.28, 0.56, 0, 0, 0,
-      0, 0, 0, 0.6, 0.3, 0.3, 
-      0, 0, 0, 0.3, 0.6, 0.3,
-      0, 0, 0, 0.3, 0.3, 0.6 
-    ),
-    nrow = 6
-  )
-) %>% 
+
+
+summary(model_fit)$summary[,"Rhat"] %>% 
   as.data.frame() %>% 
-  mutate(mean1 = mean(V1), var1 = var(V1))
+  rownames_to_column("parameter") %>% 
+  rename("Rhat" = ".") %>% 
+  filter(grepl("mu", parameter) & parameter != "mu_0") 
 ```
+
+In Figure ?? we can see the traceplots of the mean vector. Visually it seems that we have reached some sort of convergence but we will combine this with The Gelman-Rubin statistic. In \texttt{Rstan} this statistic is calculated and denoted Rhat.   
+
+```{r}
+summary(model_fit)$summary[,"Rhat"] %>% 
+  as.data.frame() %>% 
+  rownames_to_column("parameter") %>% 
+  rename("Rhat" = ".") %>% 
+  filter(grepl("mu", parameter) & parameter != "mu_0") %>% 
+  kable(align = "c")
+```
+
+In Table ?? we can see the Rhat values of the mean vector and all of them are less than 1.01 which then imply that convergence of the chains is reached. We will not look at all the traceplots for the parameters since it will become quite many of them. The Rhat value is easy to check for every parameter and when doing this one find that Rhat is less than 1.01 for every parameter in our model. So we seem to get convergence. we can also look at the autocorrelation plots 
+
+```{r}
+stan_ac(model_fit, pars = "mu")
+```
+
+
 
 ```{r, eval=FALSE}
 # testing area
