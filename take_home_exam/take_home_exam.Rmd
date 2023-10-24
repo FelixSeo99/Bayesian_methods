@@ -358,7 +358,7 @@ data_returns_2 %>%
 
 From Figure ?? we can make some assessment on the validity of our model setup. All stocks seem to follow a unimodal distribution with mean close to 0. Approximating the returns with a multivariate distribution seems justified. Now we turn to the model setup in \texttt{Rstan}. One thing to note is that we need to restrict the output of the parameters $\alpha$ and $\beta$ to be non-negative. This is since we in the inverse-Wishart distribution need a positive definite matrix as the scale parameter (the $\nu_0 \textbf{P}_0$ in the above). Other than that there is nothing we need to keep in mind and can just define the model in \texttt{Rstan} following the model setup before.
 
-We can take a closer look at the way we define the covariance matrix $\boldsymbol{\Sigma}$. The way we define $\textbf{P}_0$ makes us inclined that we want no correlation between the different sectors. However, have in mind that we do not know the properties of the output for the inverse-Wishart distribution with our parameterization. But looking at a table of distributions (see \textbf{BAYESIAN METHODS}) for $V \sim$ Inv-Wishart$(\boldsymbol{\Omega}, \nu)$ where $\boldsymbol{\Omega}$ is a $k \times k$ symmetric and positive definite matrix, we have that the expected value of matrix element $V_{ij}$ is 
+We can take a closer look at the way we define the covariance matrix $\boldsymbol{\Sigma}$. The way we define $\textbf{P}_0$ makes us inclined to think that we want no correlation between the different sectors. However, have in mind that we do not know the properties of the output for the inverse-Wishart distribution with our parameterization. But looking at a table of distributions (see \textbf{BAYESIAN METHODS}) for $V \sim$ Inv-Wishart$(\boldsymbol{\Omega}, \nu)$ where $\boldsymbol{\Omega}$ is a $k \times k$ symmetric and positive definite matrix, we have that the expected value of matrix element $V_{ij}$ is 
 $$
 \E(V_{ij}) = \frac{1}{\nu - k - 1} \Omega_{ij}^{-1}.
 $$
@@ -370,7 +370,15 @@ $$
 \boldsymbol{0} & (\beta \textbf{P}_B)^-{1}  
 \end{pmatrix}.
 $$
-Thus the covariance elements in $\boldsymbol{\Sigma}$ will have expected value equal to 0. So in some way we get closer to having uncorrelated sectors, but we do not know the variances of the elements in $\boldsymbol{\Sigma}$ but hopefully it is quite small.  
+Thus the covariance elements in $\boldsymbol{\Sigma}$ will have expected value equal to 0. So in some way we get uncorrelated sectors, but we do not know the variances of the elements in $\boldsymbol{\Sigma}$ but hopefully it is quite small. If the variance is not small then we may get large correlations between sectors which may impact our results.  
+
+Now let us take a look on the mean vector in our model namely 
+$$
+\boldsymbol{\mu}|\mu_0, \sigma^2 \sim N(\mu_0 \boldsymbol{1}, \sigma^2 \boldsymbol{I}).
+$$
+We can see that each element in the vector has mean $\mu_0 \sim N(0,1)$ and variance $\sigma^2 \sim \text{Inv-Gamma}(1, 1)$. Each element in the mean vector is also uncorrelated so that we assume that the expected value of the returns of each stock is independent of the other stocks. Assuming this may be valid because the reasonable part is that we in the returns $\textbf{Y}$ have some correlation between stocks in the same sectors. 
+
+With our model defined and set up in \texttt{Rstan} we can start looking at how well it performs. First we will conduct posterior predictive checks. We will get a sample from the posterior predictive distribution and derive the summary statistics for it. 
 
 ```{r, eval = FALSE}
 # Task 6 b
@@ -407,8 +415,8 @@ model_fit <- stan(
   "stan_model_6.stan",
   data = model_data,
   chains = 4, 
-  iter = 5000, 
-  warmup = 2000,
+  iter = 10000, 
+  warmup = 5000,
   cores = 4
   )
 
