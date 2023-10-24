@@ -380,7 +380,7 @@ We can see that each element in the vector has mean $\mu_0 \sim N(0,1)$ and vari
 
 With our model defined and set up in \texttt{Rstan} we can start looking at how well it performs. First we will conduct posterior predictive checks. We will get a sample from the posterior predictive distribution and derive the summary statistics for it. 
 
-```{r, eval = FALSE}
+```{r}
 # Task 6 b
 
 P_alpha <- matrix(c(1, 0.5, 0.5, 0, 0, 0, 
@@ -420,7 +420,7 @@ model_fit <- stan(
   cores = 4
   )
 
-sampling(stan_model("stan_model_6.stan"), data = list(
+post_pred_samp <- sampling(stan_model("stan_model_6.stan"), data = list(
   "N" = length(data_returns$Date),
   "K" = 6,
   "Y" = data_stock,
@@ -429,8 +429,41 @@ sampling(stan_model("stan_model_6.stan"), data = list(
   "P_alpha" = P_alpha * 100, 
   "P_beta" = P_beta * 100
   ),
-  iter = 10000
+  chains = 1,
+  iter = 20000
 )
+
+rstan::extract(post_pred_samp, pars = "y_rep") %>% 
+  as.data.frame() %>% 
+  rename(
+    "Energy.Stock1" = "y_rep.1",
+    "Energy.Stock2" = "y_rep.2",
+    "Energy.Stock3" = "y_rep.3",
+    "IT.Stock1" = "y_rep.4",
+    "IT.Stock2" = "y_rep.5",
+    "IT.Stock3" = "y_rep.6"
+  ) %>% 
+  pivot_longer(everything(), names_to = "stock", values_to = "returns") %>% 
+  group_by(stock) %>% 
+  summarise(mean = mean(returns), variance = var(returns), median = median(returns))
+
+
+#test <- posterior::extract_variable(post_pred_samp, variable = c("y_rep[1]"))
+#rstan::extract(post_pred_samp, pars = "y_rep") %>% 
+#  as.data.frame() %>%
+#  rename(
+#    "y_1" = "y_rep.1",
+#    "y_2" = "y_rep.2",
+#    "y_3" = "y_rep.3",
+#    "y_4" = "y_rep.4",
+#    "y_5" = "y_rep.5",
+#    "y_6" = "y_rep.6"
+#  ) %>% 
+#  pivot_longer(everything(), names_to = "stock", values_to = "returns") %>% 
+#  ggplot(aes(x = returns, y = after_stat(density))) +
+#  geom_histogram(bins = 50, color = "black", fill = "white") +
+#  facet_wrap(vars(stock))
+           
 ```
 
 ```{r, eval = FALSE}
