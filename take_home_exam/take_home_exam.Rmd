@@ -1,10 +1,10 @@
 ---
-title: "Untitled"
+title: "Take Home Exam in Bayesian Methods"
 author: "Felix Seo"
 date: "2023-10-11"
 output:
   pdf_document: 
-    extra_dependencies: ["amsmath"]
+    extra_dependencies: ["amsmath", "float"]
 ---
 
 ```{r setup, include=FALSE}
@@ -13,7 +13,8 @@ knitr::opts_chunk$set(
   cache = TRUE,
   fig.height = 4,
   fig.width = 7, 
-  fig.pos = "h",
+  fig.pos = "H",
+  out.extra = "",
   message = FALSE, 
   warning = FALSE
 )
@@ -42,7 +43,7 @@ data_returns <- read_delim("../data/returns.csv", delim = ",") %>%
 
 We can make a contour plot of the unnormalized posterior in the range $\alpha \in [-2.5, 5]$ and $\beta \in [-1, 30]$. 
 
-```{r}
+```{r, fig.cap = "Contour plot of the unnormalized posterior for $\\alpha \\in [-2.5, 5]$."}
 # Task 5 b
 
 mean_vec <- c(0, 10)
@@ -126,11 +127,9 @@ MH_alg <- function(alpha_init, beta_init, x, y, n = 5, iter){
 
   data.frame("alpha" = alpha_seq, "beta" = beta_seq)
 }
-
-
 ```
 
-```{r, fig.cap="dafd fd f d f df"}
+```{r, fig.cap="Traceplots of $\\alpha$ and $\\beta$ with 10000 iterations."}
 # Task 5d traceplots 
 set.seed(990108)
 
@@ -154,9 +153,9 @@ samples %>%
   facet_wrap(~parameter, scales = "fixed")
 ```
 
-We can see from the plot that $\alpha$ has a smaller spread that $\beta$. Visually it is quite difficult to see if convergence have been attained. We should also try many different starting points for the parameters and plotting them to see if the chains visually coincide. A burn-in phase is desired where we remove draws from the beginning of the chains to not be able to distinguish where each chain has started. Still with this we should use a quantitative statistic to infer whether convergence is reached or not. Since if we make traceplots for 6 different starting values of $\alpha$ and $\beta$ we can see the need for quantitative methods. 
+We can see from the plot that $\alpha$ has a smaller spread that $\beta$. Visually it is quite difficult to see if convergence have been attained. We should also try many different starting points for the parameters and plotting them to see if the chains visually coincide. A burn-in phase is desired where we remove draws from the beginning of the chains to not be able to distinguish where each chain has started. Still with this we should use a quantitative statistic to infer whether convergence is reached or not. Since if we make traceplots for 6 different starting values of $\alpha$ and $\beta$ we can see the need for quantitative methods. We call each set of starting values and its traceplot a chain. 
 
-```{r}
+```{r, fig.cap = "Traceplots of $\\alpha$ and $\\beta$ with 10000 iterations. Here 6 different starting values of $\\alpha$ and $\\beta$ are considered."}
 set.seed(990108)
 
 samples2 <- MH_alg(0, 2.5, data_toxic$x, data_toxic$y, iter = 10000) %>% 
@@ -178,12 +177,13 @@ samples %>%
   mutate(group = as.factor(group)) %>% 
   ggplot(aes(x = time, y = value, color = group)) +
   geom_line() +
-  facet_wrap(~parameter)
+  facet_wrap(~parameter) +
+  labs(color = "Chain")
 ```
 
 In Figure we can see that it is quite difficult to really be sure of convergence by visual analysis. Let us now look at the marginal distribution of the parameters. 
 
-```{r}
+```{r, fig.cap = "Histograms of the marginal posterior distribution of $\\alpha$ and $\\beta$."}
 # Task 5d marginal distribution of the parameters 
 
 samples %>% 
@@ -195,7 +195,7 @@ samples %>%
 
 The marginal posterior distributions can be seen in Figure ?? for the parameters. The two parameters does not seem to follow the same distribution. It would not be wrong to say that the marginal posterior distribution for $\alpha$ seems to follow a normal distribution. For the parameter $\beta$ however, it has more of a tail and and is not symmetric. Let us now plot a sample of bivariate draws from our algorithm and plot to the contour plot in part b.  
 
-```{r}
+```{r, fig.cap= "Contour plot of the unnormalized posterior for $\\alpha \\in [-2.5, 5]$. Here a sample is plotted onto the contour plot."}
 set.seed(990108)
 
 test_alpha <- samples %>% select(alpha) %>% slice_sample(n = 2432) %>% {.$alpha}
@@ -433,18 +433,10 @@ As we can see the summary statistics in Table ?? differ from the ones we got in 
 traceplot(model_fit, pars =c("alpha", "beta", "sigma_2", "mu_0"))
 ```
 
-In Figure ?? we can see the traceplots of the parameters $\alpha$, $\beta$, $sigma^2$ and $\mu_0$. We note that all paramters except $\mu_0$ only take positive values which is exactly what we want. Visually convergence seem to be reached but we should also combine this with some quantitative method. The Gelman-Rubin statistic is calculated in \texttt{Rstan} and is denoted Rhat. A value of less than 1.01 could imply that convergence is reached. Now let us take a look at the more interesting parameters. 
+In Figure ?? we can see the traceplots of the parameters $\alpha$, $\beta$, $sigma^2$ and $\mu_0$. We note that all parameters except $\mu_0$ only take positive values which is exactly what we want. Visually convergence seem to be reached but we should also combine this with some quantitative method. The Gelman-Rubin statistic is calculated in \texttt{Rstan} and is denoted Rhat. A value of less than 1.01 could imply that convergence is reached. Now let us take a look at the more interesting parameters. 
 
 ```{r}
-#rstan::extract(model_fit, pars = c("mu", "cov_mat")) %>% 
-#  as.data.frame() %>% 
 traceplot(model_fit, pars = "mu")
-
-#summary(model_fit)$summary[,"Rhat"] %>% 
-#  as.data.frame() %>% 
-#  rownames_to_column("parameter") %>% 
-#  rename("Rhat" = ".") %>% 
-#  filter(grepl("mu", parameter) & parameter != "mu_0") 
 ```
 
 In Figure ?? we can see the traceplots of the mean vector. Visually it seems that we have reached some sort of convergence but we will combine this with The Gelman-Rubin statistic. In \texttt{Rstan} this statistic is calculated and denoted Rhat.   
@@ -467,7 +459,7 @@ In Table ?? we can see the Rhat values of the mean vector and all of them are le
 stan_ac(model_fit, pars = "mu")
 ```
 
-We can see In Figure ?? the autocorrelation plot of the mean vector. Note that the autocorrelation drops rather quickly as the time lag increases. This is desired since MCMC creates a autocorrelated sample and we want the correlation to be as small as possibly. Acceptable range of autocorrelation is as always difficult to say and varies from time to time, but here we at least seem to get it quite low. We can also do teh same analysis for the variance of the stocks by looking at the diagonal elements in the covariance matrix. The Rhat value is less than 1.01 as mentioned before. 
+We can see In Figure ?? the autocorrelation plot of the mean vector. Note that the autocorrelation drops rather quickly as the time lag increases. This is desired since MCMC creates a autocorrelated sample and we want the correlation to be as small as possibly. Acceptable range of autocorrelation is as always difficult to say and varies from time to time, but here we at least seem to get it quite low. We can also do the same analysis for the variance of the stocks by looking at the diagonal elements in the covariance matrix. The Rhat value is less than 1.01 as mentioned before. 
 
 ```{r}
 traceplot(
