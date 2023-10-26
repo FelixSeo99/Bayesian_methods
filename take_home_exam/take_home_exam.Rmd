@@ -361,18 +361,18 @@ data_returns_2 %>%
 
 From Figure 8 we can make some assessment on the validity of our model setup. All stocks seem to follow a unimodal distribution with mean close to 0. Approximating the returns with a multivariate distribution seems justified. Now we turn to the model setup in \texttt{Rstan}. One thing to note is that we need to restrict the output of the parameters $\alpha$ and $\beta$ to be non-negative. This is since we in the inverse-Wishart distribution need a positive definite matrix as the scale parameter (the $\nu_0 \textbf{P}_0$ in the above). Other than that there is nothing we need to keep in mind and can just define the model in \texttt{Rstan} following the model setup defined previously.
 
-We can take a closer look at the way we define the covariance matrix $\boldsymbol{\Sigma}$. The way we define $\textbf{P}_0$ makes us inclined to think that we want no correlation between the different sectors. However, have in mind that we do not know the properties of the output for the inverse-Wishart distribution with our parameterization. But looking at a table of distributions, see [@carlin2008bayesian], for $V \sim$ Inv-Wishart$(\boldsymbol{\Omega}, \nu)$ where $\boldsymbol{\Omega}$ is a $k \times k$ symmetric and positive definite matrix, we have that the expected value of matrix element $V_{ij}$ is 
+We can take a closer look at the way we define the covariance matrix $\boldsymbol{\Sigma}$. The way we define $\textbf{P}_0$ makes us inclined to think that we want no correlation between the different sectors. However, have in mind that we do not know the properties of the output for the inverse-Wishart distribution with our parameterization. But looking at a table of distributions, see [@carlin2008bayesian, Appendix A], for $V \sim$ Inv-Wishart$(\boldsymbol{\Omega}, \nu)$ where $\boldsymbol{\Omega}$ is a $k \times k$ symmetric and positive definite matrix, we have that the expected value of matrix element $V_{ij}$ is 
 $$
 \E(V_{ij}) = \frac{1}{\nu - k - 1} \Omega_{ij}^{-1}.
 $$
 
-Thus the covariance elements in $\boldsymbol{\Sigma}$ which corresponds to the $\boldsymbol{0}$ block in $\textbf{P}_0$ will have expected value equal to 0. So in some way we get uncorrelated sectors, but we do not know the variances of the elements in $\boldsymbol{\Sigma}$ but hopefully it is quite small for the $\boldsymbol{0}$ block. If the variance for each covariance element is not small then we may get some correlation between sectors which may impact our results. It may be valid to think that stocks from different sectors will be uncorrelated. Also observe that the covariance between stocks in the same sector have positive expected value. This is also valid to assume since in reality stocks in the same sector often get affected by similar factors. However, for each sector block in the covariance matrix we also multiply by a factor of $\alpha$ in the IT sector and a factor of $\beta$ in the Energy sector. Both of these are standard normally distributed but only take positive values. The expected values can then change quite much and that is probably why we do this to make the covariance matrix have some bigger differences in the values of each block.    
+Thus the covariance elements in $\boldsymbol{\Sigma}$ which corresponds to the $\boldsymbol{0}$ block in $\textbf{P}_0$ will have expected value equal to 0. So in some way we get uncorrelated sectors, but we do not know the variances of the elements in $\boldsymbol{\Sigma}$ but hopefully it is quite small for the $\boldsymbol{0}$ block. If the variance for each covariance element is not small then we may get some correlation between sectors which may impact our results. It may be valid to assume that stocks from different sectors will be uncorrelated. Also observe that the covariance between stocks in the same sector have positive expected value. This is also valid to assume since in reality stocks in the same sector often get affected by similar factors. However, for each sector block in the covariance matrix we also multiply by a factor of $\alpha$ in the IT sector and a factor of $\beta$ in the Energy sector. Both of these are standard normally distributed but only take positive values. The expected values can then change quite much and that is probably why we do this to make the covariance matrix have some bigger differences in the values of each block.    
 
-Now let us take a look on the mean vector in our model namely 
+Now let us take a look on the mean vector in our model, namely 
 $$
 \boldsymbol{\mu}|\mu_0, \sigma^2 \sim N(\mu_0 \boldsymbol{1}, \sigma^2 \boldsymbol{I}).
 $$
-We can see that each element in the vector has mean $\mu_0 \sim N(0,1)$ and variance $\sigma^2 \sim \text{Inv-Gamma}(1, 1)$. Each element in the mean vector is also uncorrelated so that we assume that the expected value of the returns of each stock is independent of the other stocks. This is fine since the correlation between stocks in same sectors are already accounted for as we have mentioned. Also to think that the expected value of the returns are independent is valid. This is because say that a company performs well and get a nice returns and thus large expected returns. If another company in the same sector is not well managed and then performs poor, this should not really affect other companies expected return in the same sector (probably not much however). The parameter $\mu_0$ is standard normal and makes each company having the same expected value in the distribution of $\boldsymbol{\mu}$. The parameter $\sigma^2$ is inverse gamma distributed meaning that it can only take positive values.    
+We can see that each element in the vector has mean $\mu_0 \sim N(0,1)$ and variance $\sigma^2 \sim \text{Inv-Gamma}(1, 1)$. Each element in the mean vector is also uncorrelated so that we assume that the expected value of the returns of each stock is independent of the other stocks. This is fine since the correlation between stocks in same sectors are already accounted for as we have mentioned. Also to think that the expected value of the returns are independent is valid. This is because say that a company performs well and get a nice returns and thus large expected returns. If another company in the same sector is not well managed and then performs poor, this should not really affect the expected returns of other companies in the same sector (probably not much however). The parameter $\mu_0$ is standard normal and makes each company having the same expected value in the distribution of $\boldsymbol{\mu}$. The parameter $\sigma^2$ is inverse gamma distributed meaning that it can only take positive values.    
 
 With our model defined and set up in \texttt{Rstan} we can start looking at how well it performs. First we will conduct posterior predictive checks. We will get a sample from the posterior predictive distribution and derive the summary statistics for it. 
 
@@ -439,19 +439,21 @@ rstan::extract(model_fit, pars = "y_rep") %>%
     posterior predictive distribution.")
 ```
 
-As we can see the summary statistics in Table ?? differ from the ones we got in Table ??. We have larger mean, variances and median for all of the stocks. Some stocks have reversed sign of the means. So our model does not seem to be able to be able to predict the returns of the stocks that well. This could be a consequence of our model specification where we may have not been able to capture the properties of the data. Let us now look at the convergence diagnostics of our model. First we can look at $\alpha$, $\beta$, $sigma^2$ and $\mu_0$.
+As we can see the summary statistics in Table 2 differ from the ones we got in Table 1. We have larger mean and variances in absolute value, but also the median for all of the stocks are quite different. Some stocks have reversed sign of the means. So our model does not seem to be able to predict the returns of the stocks that well. This could be a consequence of our model specification where we may not be able to capture important properties of the data. Let us now look at the convergence diagnostics of our model. First we can look at the parameters $\alpha$, $\beta$, $\sigma^2$ and $\mu_0$.
 
-```{r, fig.cap="Traceplots for $\\alpha$, $\\beta$, $\\sigma^2$ and $\\mu_0$ with 4 chains each. A warmup of size 10000 was removed from the total of 20000 iterations."}
-traceplot(model_fit, pars =c("alpha", "beta", "sigma_2", "mu_0"))
+```{r, fig.cap="Traceplots for $\\alpha$, $\\beta$, $\\sigma^2$ and $\\mu_0$ with 4 chains each. A warmup of size 20000 was removed from the total of 30000 iterations."}
+traceplot(model_fit, pars =c("alpha", "beta", "sigma_2", "mu_0")) + 
+  xlab("iteration")
 ```
 
-In Figure ?? we can see the traceplots of the parameters $\alpha$, $\beta$, $\sigma^2$ and $\mu_0$. We note that all parameters except $\mu_0$ only take positive values which is exactly what we want. Visually convergence seem to be reached but we should also combine this with some quantitative method. The Gelman-Rubin statistic is calculated in \texttt{Rstan} and is denoted Rhat. A value of less than 1.01 could imply that convergence is reached. Now let us take a look at the more interesting parameters. 
+In Figure 9 we can see the traceplots of the parameters $\alpha$, $\beta$, $\sigma^2$ and $\mu_0$. We note that all parameters except $\mu_0$ only take positive values which is exactly what we want. Visually, convergence seems to be reached but we should also combine this with some quantitative method. The Gelman-Rubin statistic is calculated in \texttt{Rstan} and is denoted Rhat. A value of close to 1 is desired to imply convergence. For these four parameters the Rhat value is very close to 1. Now let us take a look at the more interesting parameters. 
 
-```{r, fig.cap="Traceplots for the elements of the mean vector $\\boldsymbol{\\mu}$ with 4 chains each. A warmup of size 10000 was removed from the total of 20000 iterations."}
-traceplot(model_fit, pars = "mu") 
+```{r, fig.cap="Traceplots for the elements of the mean vector $\\boldsymbol{\\mu}$ with 4 chains each. A warmup of size 20000 was removed from the total of 30000 iterations."}
+traceplot(model_fit, pars = "mu") + 
+  xlab("iteration")
 ```
 
-In Figure ?? we can see the traceplots of the mean vector. Visually it seems that we have reached some sort of convergence but we will combine this with The Gelman-Rubin statistic. In \texttt{Rstan} this statistic is calculated and denoted Rhat.   
+In Figure 10 we can see the traceplots of the mean vector. Visually it seems that we have reached some sort of convergence but we will combine this with The Gelman-Rubin statistic.   
 
 ```{r}
 summary(model_fit)$summary[,"Rhat"] %>% 
@@ -465,16 +467,16 @@ summary(model_fit)$summary[,"Rhat"] %>%
     col.names = c("$\\mu_1$", "$\\mu_2$", "$\\mu_3$", "$\\mu_4$", "$\\mu_5$", "$\\mu_6$"),
     caption = "Rhat values (Gelman-Rubin statistic) for the elements in the mean vector $\\boldsymbol{\\mu}$.")
 
-#summary(model_fit)$summary[,"Rhat"] #Rhat for all parameters 
+#summary(model_fit)$summary[,"Rhat"] #Rhat for all parameters, are close to 1 
 ```
 
-In Table ?? we can see the Rhat values of the mean vector and all of them are less than 1.01 which then imply that convergence of the chains is reached. We will not look at all the traceplots for the parameters since it will become quite many of them. The Rhat value is easy to check for every parameter and when doing this one find that Rhat is less than 1.01 for every parameter in our model. So we seem to get convergence by quantitative methods. we can also look at the autocorrelation plots. Starting with the mean vector $\boldsymbol{\mu}$. 
+In Table 3 we can see the Rhat values of the mean vector and all of them are close to 1 which then imply that convergence of the chains is reached. We will not look at all the traceplots for the parameters since it will become quite many of them. The Rhat value is easy to check for every parameter and when doing this we find that Rhat is close to 1 for every parameter in our model. So we seem to get convergence according to the Gelman-Rubin statistic for all the parameters in the model. we can also look at the autocorrelation plots. Starting with the mean vector $\boldsymbol{\mu}$. 
 
-```{r, fig.cap="Autocorrealtion plot of the elements in the mean vector $\\boldsymbol{\\mu}$. The autocorrelation is averaged over all the 4 chains."}
+```{r, fig.cap="Autocorrealtion plot of the elements in the mean vector $\\boldsymbol{\\mu}$. The autocorrelation is averaged over the 4 chains."}
 stan_ac(model_fit, pars = "mu")
 ```
 
-We can see In Figure ?? the autocorrelation plot of the mean vector. Note that the autocorrelation drops rather quickly as the time lag increases. This is desired since MCMC creates a autocorrelated sample and we want the correlation to be as small as possibly. Acceptable range of autocorrelation is as always difficult to say and varies from time to time, but here we at least seem to get it quite low. We can also do the same analysis for the variance of the stocks by looking at the diagonal elements in the covariance matrix. The Rhat value is less than 1.01 as mentioned before. 
+We can see In Figure 11 the autocorrelation plots of the elements in the mean vector $\boldsymbol{\mu}$. Note that the autocorrelation drops rather quickly as the time lag increases. This is desired since MCMC creates a autocorrelated sample and we want the correlation to be as small as possibly. Acceptable range of autocorrelation is as always difficult to say and varies from time to time, but here we at least seem to get it quite low. We can also do the same analysis for the variance of the stocks by looking at the diagonal elements in the covariance matrix. The Rhat value for these parameters are also close to 1 as mentioned before. 
 
 ```{r, fig.cap="Traceplots for the variance of the returns, i.e. the diagonal elements in the covariance matrix $\\boldsymbol{\\Sigma}$."}
 traceplot(
@@ -487,12 +489,13 @@ traceplot(
     "cov_mat[5,5]",
     "cov_mat[6,6]"
   )
-)
+) + 
+  xlab("iteration")
 ```
 
-The traceplots of the variances can be seen in Figure ??. First thing to note is that they only take positive values as a variance should. Visually we can argue for convergence. The traceplots all seem to move around 1 which is supported by our calculations of the sample variance in Table ??. We can also see in Figure ?? the autocorrelation plots of the variances and may note that the autocorrelation is more present than in the case of the mean. It stays larger for longer and does not drop as rapidly. So the sample for the variances are more autocorrelated than the mean but the results can still be acceptable.  
+The traceplots of the variances can be seen in Figure 12. First thing to note is that they only take positive values as a variance should. Visually we can argue for convergence. The traceplots all seem to move around 1 which is supported by our calculations of the sample variance in Table 2. We can also see in Figure 13 the autocorrelation plots of the variances and may note that the autocorrelation is more present than in the case of the mean. It stays larger for longer and does not drop as rapidly. So the sample for the variances are more autocorrelated than the mean but the results may still make our overall analysis acceptable.  
 
-```{r, fig.cap="Autocorrelation plots for the variance elements in the covariance matrix $\\boldsymbol{\\Sigma}$."}
+```{r, fig.cap="Autocorrelation plots for the variance elements in the covariance matrix $\\boldsymbol{\\Sigma}$, i.e. the diagonal elements."}
 stan_ac(
   model_fit, 
   pars = c(
@@ -508,7 +511,7 @@ stan_ac(
   
 ```
 
-Now we will take some look at the non-diagonal elements in the covariance matrix as well. This is since we discussed before they have expected value 0 but we do not know about their variances. The Rhat is less than 1.01 for every non-diagonal element and we will take a look on the upper right part of the covariance matrix that corresponds to the 0 block.
+Now we will take some look at the non-diagonal elements in the covariance matrix as well. This because as we discussed before they have expected value 0 but we do not know about their variances. We will take a look on the upper right part of the covariance matrix that corresponds to the 0 block.
 
 ```{r, fig.height=4, fig.cap="Traceplots for the upper non-diagonal elements corresponding to covariances between the stocks, i.e. the upper non-diagonal elements in the covariance matrix $\\boldsymbol{\\Sigma}$."}
 traceplot(
@@ -524,12 +527,13 @@ traceplot(
     "cov_mat[3,5]",
     "cov_mat[3,6]"
   )
-)
+) + 
+  xlab("iteration")
 ```
 
-We can see in Figure ?? that the traceplots for the covariance between sectors are moving close to 0. This is nice since then we see that the property of uncorrelated sectors seems to hold somewhat fine. Visually convergence seem to be attained. The other non-diagonal elements of the covariance matrix that correspond to the upper elements in $\alpha\textbf{P}_A$ we get the following traceplots seen in Figure ??. The traceplots only take positive values as for the diagonal elements but they seem to be smaller or rather have less variance. So we retain the positive correlation between stocks in the same sector.   
+We can see in Figure 14 that the traceplots for the covariance between sectors are moving close to 0. This is nice since then we see that the property of uncorrelated sectors seems to hold somewhat fine. Visually, convergence seem to be attained. The other non-diagonal elements of the covariance matrix that correspond to the upper elements in $\alpha\textbf{P}_A$ we get the traceplots seen in Figure 15. The traceplots only take positive values as for the diagonal elements but they seem to be smaller and have less variance compared to variances in Figure 12. This is probably expected since these elements are multiplied by a factor of 0.5 rather than 1 for the variances. So we retain the positive correlation between stocks in the same sector.   
 
-```{r, fig.cap="Traceplots of the non-diagonal elements in the covariance matrix $\\boldsymbol{\\Sigma}$ corresponding to the non-diagonal elements in the $\\alpha\\textbf{P}_A$ block of the matrix $\\textbf{P}_0$ matrix in the model setup."}
+```{r, fig.cap="Traceplots of the non-diagonal elements in the covariance matrix $\\boldsymbol{\\Sigma}$ corresponding to the non-diagonal elements in the $\\alpha\\textbf{P}_A$ block of the matrix $\\textbf{P}_0$."}
 traceplot(
   model_fit, 
   pars = c(
@@ -537,10 +541,11 @@ traceplot(
     "cov_mat[1,3]", 
     "cov_mat[2,3]"
   )
-)
+) + 
+  xlab("iteration")
 ```
 
-So in conclusion our model does not seem to capture the relevant properties of the data set. Our model outputs higher variance and larger mean in absolute value. The mean is in most cases up to ten times bigger than the sample mean of the data set. The sign of the mean is not preserved as well. For what reason this happens is difficult to tell. Maybe the way we have defined our model makes it not able to extract and use the relevant information in the data. But when it comes to convergence diagnostics of the model it can be argued to be satisfactory. We can not say for sure that we have convergence since we might still be biased for the target posterior as we could have missed relevant information. 
+In conclusion our model does not seem to capture the relevant properties of the data set. Our model outputs higher variance and larger mean in absolute value. The mean is in most cases up to ten times bigger than the sample mean of the data set. The sign of the mean is not preserved as well. For what reason this happens is difficult to tell. Maybe the way we have defined our model makes it not able to extract and use the relevant information in the data. But when it comes to convergence diagnostics of the model it can be argued to be satisfactory. 
 
 
 ```{r, eval=FALSE}
