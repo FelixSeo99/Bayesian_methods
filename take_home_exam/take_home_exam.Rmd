@@ -2,9 +2,13 @@
 title: "Take Home Exam in Bayesian Methods"
 author: "Felix Seo"
 date: "2023-10-11"
+bibliography: references.bibtex
 output:
   pdf_document: 
-    extra_dependencies: ["amsmath", "float"]
+    extra_dependencies: 
+      amsmath: 
+      float:
+      caption: ["labelfont = bf", "font = small", "font = it"]
 ---
 
 ```{r setup, include=FALSE}
@@ -31,6 +35,11 @@ library(rstan)
 library(knitr)
 ```
 
+```{r, out.width="60%", fig.align="center", fig.cap="dfg fdaf"}
+include_graphics("IMG_1171.jpg")
+```
+
+
 ```{r}
 # loading the data
 data_toxic <- read_delim("../data/toxic.csv", delim = ",")
@@ -41,9 +50,9 @@ data_returns <- read_delim("../data/returns.csv", delim = ",") %>%
 
 # Task 5
 
-We can make a contour plot of the unnormalized posterior in the range $\alpha \in [-2.5, 5]$ and $\beta \in [-1, 30]$. 
+We can make a contour plot of the unnormalized posterior in the range $\alpha \in [-2.5, 5]$ and $\beta \in [-1, 30]$ seen in Figure 2.  
 
-```{r, fig.cap = "Contour plot of the unnormalized posterior for $\\alpha \\in [-2.5, 5]$."}
+```{r, fig.cap = "Contour plot of the unnormalized log-posterior for $\\alpha \\in [-2.5, 5]$ and $\\beta \\in [-1, 30]$."}
 # Task 5 b
 
 mean_vec <- c(0, 10)
@@ -73,7 +82,9 @@ data.frame(
   ) %>% # our function not vectorized, not work with mutate.
   ggplot(aes(x = alpha, y = beta, z = un_post)) +
   geom_contour_filled() +
-  theme(legend.key.height= unit(0.45, 'cm'))
+  xlab(latex2exp::TeX(r'($\alpha$)')) +
+  ylab(latex2exp::TeX(r'($beta$)')) +
+  theme(legend.key.height= unit(0.45, 'cm'), axis.title.y = element_text(angle = 0, vjust = 0.5)) 
 ```
 
 We will now implement a Metropolis-Hastings (MH) sampler to sample from the posterior distribution. We will use a multivariate normal distribution as proposal distribution such that 
@@ -86,7 +97,7 @@ We will now implement a Metropolis-Hastings (MH) sampler to sample from the post
   0 & \sigma^2_\beta
   \end{pmatrix}.
 \end{equation*}
-Let $\sigma^2_\alpha = 1$ and $\sigma^2_\beta = 5$. We will sample 10000 draws from the posterior using our MH sampler starting with $(\alpha_0, \beta_0) = (-2.5, 1)$. First we will begin with the traceplots for the parameters.   
+Let $\sigma^2_\alpha = 1$ and $\sigma^2_\beta = 5$. We will sample 10000 draws from the posterior using our MH sampler starting with $(\alpha_0, \beta_0) = (-2.5, 0)$. First we will begin with the traceplots for the parameters.   
 
 ```{r}
 # Task 5 c
@@ -143,9 +154,10 @@ samples %>%
   ggplot(aes(x = time, y = value)) +
   geom_line() +
   facet_wrap(~parameter, scales = "fixed")
+
 ```
 
-We can see from the plot that $\alpha$ has a smaller spread that $\beta$. Visually it is quite difficult to see if convergence have been attained. We should also try many different starting points for the parameters and plotting them to see if the chains visually coincide. A burn-in phase is desired where we remove draws from the beginning of the chains to not be able to distinguish where each chain has started. Still with this we should use a quantitative statistic to infer whether convergence is reached or not. Since if we make traceplots for 6 different starting values of $\alpha$ and $\beta$ we can see the need for quantitative methods. We call each set of starting values and its traceplot a chain. 
+We can see in Figure 3 the traceplots for the parameters and that $\alpha$ has a smaller spread that $\beta$. Visually it is quite difficult to see if convergence have been attained. We should also try many different starting points for the parameters and plotting them to see if the chains visually coincide. A burn-in phase is desired where we remove draws from the beginning of the chains to not be able to distinguish where each chain has started and the chains get well mixed. Still with this we should use a quantitative statistic to infer whether convergence is reached or not. Since if we make traceplots for 6 different starting values of $\alpha$ and $\beta$ we can see the need for quantitative methods. We call each set of starting values and its traceplot a chain. 
 
 ```{r, fig.cap = "Traceplots of $\\alpha$ and $\\beta$ with 10000 iterations. Here 6 different starting values of $\\alpha$ and $\\beta$ are considered so we end up with 6 chains for each parameter."}
 set.seed(990108)
@@ -173,7 +185,7 @@ samples %>%
   labs(color = "Chain")
 ```
 
-In Figure we can see that it is quite difficult to really be sure of convergence by visual analysis. Let us now look at the marginal distribution of the parameters. 
+In Figure 4 we can see that it seems that we may have reached convergence by visual analysis. But we should also combine this with quantitative methods to be more sure. Let us now look at the marginal distribution of the parameters. 
 
 ```{r, fig.cap = "Histograms of the marginal posterior distribution of $\\alpha$ and $\\beta$."}
 # Task 5d marginal distribution of the parameters 
@@ -181,17 +193,17 @@ In Figure we can see that it is quite difficult to really be sure of convergence
 samples %>% 
   pivot_longer(cols = everything(), names_to = c("parameter"), values_to = "value") %>% 
   ggplot(aes(x = value, y = after_stat(density))) +
-  geom_histogram(bins = 100, color = "black", fill = "white") + 
+  geom_histogram(bins = 80, color = "black", fill = "white") + 
   facet_wrap(vars(parameter), scales = "free_x")
 ```
 
-The marginal posterior distributions can be seen in Figure ?? for the parameters. The two parameters does not seem to follow the same distribution. It would not be wrong to say that the marginal posterior distribution for $\alpha$ seems to follow a normal distribution. For the parameter $\beta$ however, it has more of a tail and and is not symmetric. Let us now plot a sample of bivariate draws from our algorithm and plot to the contour plot in part b.  
+The marginal posterior distributions can be seen in Figure 5 for the parameters. The two parameters does not seem to follow the same distribution. It would not be completely wrong to say that the marginal posterior distribution for $\alpha$ seems to follow a normal distribution. For the parameter $\beta$ however, it has more of a tail and does not seem to be symmetric. Let us now plot a sample of bivariate draws from our algorithm and plot to the contour plot seen in Figure 2. In Figure 6 we can see that the sample seems to be evenly spread around $\beta = 10$ and $\alpha = 1$.  
 
-```{r, fig.cap= "Contour plot of the unnormalized posterior for $\\alpha \\in [-2.5, 5]$. Here a sample is plotted onto the contour plot."}
+```{r, fig.cap= "Contour plot of the unnormalized log-posterior for $\\alpha \\in [-2.5, 5]$ and $\\beta \\in [-1, 30]$. Here a sample is plotted onto the contour plot."}
 set.seed(990108)
 
-test_alpha <- samples %>% select(alpha) %>% slice_sample(n = 2432) %>% {.$alpha}
-test_beta <- samples %>% select(beta) %>% slice_sample(n = 2432) %>% {.$beta}
+test_alpha <- samples3 %>% select(alpha) %>% slice_sample(n = 2432) %>% {.$alpha}
+test_beta <- samples3 %>% select(beta) %>% slice_sample(n = 2432) %>% {.$beta}
 
 data.frame(
   "alpha" = rep(seq_alpha, each = length(seq_beta)),
@@ -205,7 +217,9 @@ data.frame(
   ggplot(aes(x = alpha, y = beta, z = un_post)) +
   geom_contour_filled() +
   geom_point(data = NULL, aes(x = test_alpha, y = test_beta)) +
-  theme(legend.key.height= unit(0.45, 'cm'))
+  xlab(latex2exp::TeX(r'($\alpha$)')) +
+  ylab(latex2exp::TeX(r'($beta$)')) +
+  theme(legend.key.height= unit(0.45, 'cm'), axis.title.y = element_text(angle = 0, vjust = 0.45)) 
 ```
 
 
@@ -302,11 +316,11 @@ $$
 1 & 0.5 & 0.5 \\
 0.5 & 1 & 0.5 \\
 0.5 & 0.5 & 1
-\end{pmatrix} 
-\\
+\end{pmatrix}, 
+\quad
 \alpha \sim N(0, 1), \quad \beta \sim N(0,1).
 $$
-First we will provide some summary statistics for the returns of each stock. 
+First we will provide some summary statistics for the returns in our data set of each stock. 
 
 ```{r}
 # Task 6 a
@@ -324,10 +338,10 @@ data_returns_2 %>%
   ) %>% 
   kable(
     align = "c", 
-    caption = "Showing the mean, variance and median for the 6 different stocks on the original data set.")
+    caption = "Showing the mean, variance and median of the returns of the 6 different stocks.")
 ```
 
-We can see in Table ?? that the mean is quite small but similar for all stocks. Stock 1 and 3 in the IT sector have negative mean bu so have stock 3 in the Energy sector. The variance is quite similar between the stocks in the same sector but with higher variance for IT stocks than Energy stocks. The median are all positive except for IT stock 1 and 3. Let us also create boxplots for the different stocks.
+We can see in Table 1 that the mean is quite small but similar for all stocks. Stock 1 and 3 in the IT sector have negative mean but so have stock 3 in the Energy sector. The variance is quite similar between the stocks in the same sector but with higher variance for IT stocks than Energy stocks. The median are all positive except for IT stock 1 and 3. Let us also create boxplots for the different stocks.
 
 ```{r, fig.cap = "Boxplot of the returns of the 6 different stocks."}
 data_returns_2 %>% 
@@ -335,7 +349,7 @@ data_returns_2 %>%
   geom_boxplot()
 ```
 
-In Figure ?? we can see the corresponding boxplots for the stocks. We note that there are some extreme cases. Most notably Energy stock 3 and IT stock 1 have some very big negative returns. Only IT stock 3 have an extreme case where the returns are positive up to about 0.25. Now to represent the possible distributions of the stocks we will create histograms. 
+In Figure 7 we can see the corresponding boxplots for the stocks. We note that there are some extreme cases. Most notably Energy stock 3 and IT stock 1 have some very big negative returns. Only IT stock 3 have an extreme case where the returns are positive up to about 0.25. Now to represent the possible distributions of the returns of the stocks we will create histograms. 
 
 ```{r, fig.cap="Histogram for the returns of the 6 different stocks."}
 # histograms for the stocks  
@@ -345,20 +359,20 @@ data_returns_2 %>%
   facet_wrap(~ stock)
 ```
 
-From Figure ?? we can make some assessment on the validity of our model setup. All stocks seem to follow a unimodal distribution with mean close to 0. Approximating the returns with a multivariate distribution seems justified. Now we turn to the model setup in \texttt{Rstan}. One thing to note is that we need to restrict the output of the parameters $\alpha$ and $\beta$ to be non-negative. This is since we in the inverse-Wishart distribution need a positive definite matrix as the scale parameter (the $\nu_0 \textbf{P}_0$ in the above). Other than that there is nothing we need to keep in mind and can just define the model in \texttt{Rstan} following the model setup before.
+From Figure 8 we can make some assessment on the validity of our model setup. All stocks seem to follow a unimodal distribution with mean close to 0. Approximating the returns with a multivariate distribution seems justified. Now we turn to the model setup in \texttt{Rstan}. One thing to note is that we need to restrict the output of the parameters $\alpha$ and $\beta$ to be non-negative. This is since we in the inverse-Wishart distribution need a positive definite matrix as the scale parameter (the $\nu_0 \textbf{P}_0$ in the above). Other than that there is nothing we need to keep in mind and can just define the model in \texttt{Rstan} following the model setup defined previously.
 
-We can take a closer look at the way we define the covariance matrix $\boldsymbol{\Sigma}$. The way we define $\textbf{P}_0$ makes us inclined to think that we want no correlation between the different sectors. However, have in mind that we do not know the properties of the output for the inverse-Wishart distribution with our parameterization. But looking at a table of distributions (see \textbf{BAYESIAN METHODS}) for $V \sim$ Inv-Wishart$(\boldsymbol{\Omega}, \nu)$ where $\boldsymbol{\Omega}$ is a $k \times k$ symmetric and positive definite matrix, we have that the expected value of matrix element $V_{ij}$ is 
+We can take a closer look at the way we define the covariance matrix $\boldsymbol{\Sigma}$. The way we define $\textbf{P}_0$ makes us inclined to think that we want no correlation between the different sectors. However, have in mind that we do not know the properties of the output for the inverse-Wishart distribution with our parameterization. But looking at a table of distributions, see [@carlin2008bayesian], for $V \sim$ Inv-Wishart$(\boldsymbol{\Omega}, \nu)$ where $\boldsymbol{\Omega}$ is a $k \times k$ symmetric and positive definite matrix, we have that the expected value of matrix element $V_{ij}$ is 
 $$
 \E(V_{ij}) = \frac{1}{\nu - k - 1} \Omega_{ij}^{-1}.
 $$
 
-Thus the covariance elements in $\boldsymbol{\Sigma}$ which have the 0 block in $\textbf{P}_0$ will have expected value equal to 0. So in some way we get uncorrelated sectors, but we do not know the variances of the elements in $\boldsymbol{\Sigma}$ but hopefully it is quite small. If the variance is not small then we may get some correlation between sectors which may impact our results. Also observe that the covariance between stocks in the same sector have positive expected value.   
+Thus the covariance elements in $\boldsymbol{\Sigma}$ which corresponds to the $\boldsymbol{0}$ block in $\textbf{P}_0$ will have expected value equal to 0. So in some way we get uncorrelated sectors, but we do not know the variances of the elements in $\boldsymbol{\Sigma}$ but hopefully it is quite small for the $\boldsymbol{0}$ block. If the variance for each covariance element is not small then we may get some correlation between sectors which may impact our results. It may be valid to think that stocks from different sectors will be uncorrelated. Also observe that the covariance between stocks in the same sector have positive expected value. This is also valid to assume since in reality stocks in the same sector often get affected by similar factors. However, for each sector block in the covariance matrix we also multiply by a factor of $\alpha$ in the IT sector and a factor of $\beta$ in the Energy sector. Both of these are standard normally distributed but only take positive values. The expected values can then change quite much and that is probably why we do this to make the covariance matrix have some bigger differences in the values of each block.    
 
 Now let us take a look on the mean vector in our model namely 
 $$
 \boldsymbol{\mu}|\mu_0, \sigma^2 \sim N(\mu_0 \boldsymbol{1}, \sigma^2 \boldsymbol{I}).
 $$
-We can see that each element in the vector has mean $\mu_0 \sim N(0,1)$ and variance $\sigma^2 \sim \text{Inv-Gamma}(1, 1)$. Each element in the mean vector is also uncorrelated so that we assume that the expected value of the returns of each stock is independent of the other stocks. Assuming this may be valid because the reasonable part is that we in the returns $\textbf{Y}$ have some correlation between stocks in the same sectors. 
+We can see that each element in the vector has mean $\mu_0 \sim N(0,1)$ and variance $\sigma^2 \sim \text{Inv-Gamma}(1, 1)$. Each element in the mean vector is also uncorrelated so that we assume that the expected value of the returns of each stock is independent of the other stocks. This is fine since the correlation between stocks in same sectors are already accounted for as we have mentioned. Also to think that the expected value of the returns are independent is valid. This is because say that a company performs well and get a nice returns and thus large expected returns. If another company in the same sector is not well managed and then performs poor, this should not really affect other companies expected return in the same sector (probably not much however). The parameter $\mu_0$ is standard normal and should just allow companies to have different means in the distribution of $\boldsymbol{\mu}$. The parameter $\sigma^2$ is inverse gamma distributed meaning that it can only take positive values.    
 
 With our model defined and set up in \texttt{Rstan} we can start looking at how well it performs. First we will conduct posterior predictive checks. We will get a sample from the posterior predictive distribution and derive the summary statistics for it. 
 
@@ -421,7 +435,7 @@ rstan::extract(model_fit, pars = "y_rep") %>%
   summarise(mean = mean(returns), variance = var(returns), median = median(returns)) %>% 
   kable(
     align = "c", 
-    caption = "Shwing the mean, variance and median based on a sample from the 
+    caption = "Showing the mean, variance and median based on a sample from the 
     posterior predictive distribution.")
 ```
 
@@ -431,7 +445,7 @@ As we can see the summary statistics in Table ?? differ from the ones we got in 
 traceplot(model_fit, pars =c("alpha", "beta", "sigma_2", "mu_0"))
 ```
 
-In Figure ?? we can see the traceplots of the parameters $\alpha$, $\beta$, $sigma^2$ and $\mu_0$. We note that all parameters except $\mu_0$ only take positive values which is exactly what we want. Visually convergence seem to be reached but we should also combine this with some quantitative method. The Gelman-Rubin statistic is calculated in \texttt{Rstan} and is denoted Rhat. A value of less than 1.01 could imply that convergence is reached. Now let us take a look at the more interesting parameters. 
+In Figure ?? we can see the traceplots of the parameters $\alpha$, $\beta$, $\sigma^2$ and $\mu_0$. We note that all parameters except $\mu_0$ only take positive values which is exactly what we want. Visually convergence seem to be reached but we should also combine this with some quantitative method. The Gelman-Rubin statistic is calculated in \texttt{Rstan} and is denoted Rhat. A value of less than 1.01 could imply that convergence is reached. Now let us take a look at the more interesting parameters. 
 
 ```{r, fig.cap="Traceplots for the elements of the mean vector $\\boldsymbol{\\mu}$ with 4 chains each. A warmup of size 10000 was removed from the total of 20000 iterations."}
 traceplot(model_fit, pars = "mu") 
@@ -533,7 +547,7 @@ So in conclusion our model does not seem to capture the relevant properties of t
 # testing area
 set.seed(990108)
 
-P_0 <- rnorm(1) * P_alpha + rnorm(1) * P_beta   
+P_0 <-  P_alpha + P_beta   
 
 test <- LaplacesDemon::rinvwishart(100, 100 * P_0)  
 
@@ -547,4 +561,4 @@ rmvnorm(
   
 ```
 
-
+# References
