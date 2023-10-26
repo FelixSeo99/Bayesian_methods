@@ -11,7 +11,7 @@ output:
 knitr::opts_chunk$set(
   echo = FALSE,
   cache = TRUE,
-  fig.height = 4,
+  fig.height = 3,
   fig.width = 7, 
   fig.pos = "H",
   out.extra = "",
@@ -72,7 +72,8 @@ data.frame(
                      beta)
   ) %>% # our function not vectorized, not work with mutate.
   ggplot(aes(x = alpha, y = beta, z = un_post)) +
-  geom_contour_filled()
+  geom_contour_filled() +
+  theme(legend.key.height= unit(0.45, 'cm'))
 ```
 
 We will now implement a Metropolis-Hastings (MH) sampler to sample from the posterior distribution. We will use a multivariate normal distribution as proposal distribution such that 
@@ -135,15 +136,6 @@ set.seed(990108)
 
 samples <- MH_alg(-2.5, 0, data_toxic$x, data_toxic$y, iter = 10000) 
 
-#samples %>% 
-#  {mutate(., time = seq(0, length(.$alpha) - 1, 1))} %>% 
-#  ggplot(aes(x = time, y = alpha)) +
-#  geom_line()
-
-#samples %>% 
-#  {mutate(., time = seq(0, length(.$alpha) - 1, 1))} %>% 
-#  ggplot(aes(x = time, y = beta)) +
-#  geom_line()
 
 samples %>%
   {mutate(., time = seq(0, length(.$alpha) - 1, 1))} %>%
@@ -155,7 +147,7 @@ samples %>%
 
 We can see from the plot that $\alpha$ has a smaller spread that $\beta$. Visually it is quite difficult to see if convergence have been attained. We should also try many different starting points for the parameters and plotting them to see if the chains visually coincide. A burn-in phase is desired where we remove draws from the beginning of the chains to not be able to distinguish where each chain has started. Still with this we should use a quantitative statistic to infer whether convergence is reached or not. Since if we make traceplots for 6 different starting values of $\alpha$ and $\beta$ we can see the need for quantitative methods. We call each set of starting values and its traceplot a chain. 
 
-```{r, fig.cap = "Traceplots of $\\alpha$ and $\\beta$ with 10000 iterations. Here 6 different starting values of $\\alpha$ and $\\beta$ are considered."}
+```{r, fig.cap = "Traceplots of $\\alpha$ and $\\beta$ with 10000 iterations. Here 6 different starting values of $\\alpha$ and $\\beta$ are considered so we end up with 6 chains for each parameter."}
 set.seed(990108)
 
 samples2 <- MH_alg(0, 2.5, data_toxic$x, data_toxic$y, iter = 10000) %>% 
@@ -212,7 +204,8 @@ data.frame(
   ) %>% # our function not vectorized, not work with mutate.
   ggplot(aes(x = alpha, y = beta, z = un_post)) +
   geom_contour_filled() +
-  geom_point(data = NULL, aes(x = test_alpha, y = test_beta))
+  geom_point(data = NULL, aes(x = test_alpha, y = test_beta)) +
+  theme(legend.key.height= unit(0.45, 'cm'))
 ```
 
 
@@ -329,7 +322,9 @@ data_returns_2 %>%
     variance = var(returns), 
     median = median(returns)
   ) %>% 
-  kable(align = "c", caption = "Showing the")
+  kable(
+    align = "c", 
+    caption = "Showing the mean, variance and median for the 6 different stocks on the original data set.")
 ```
 
 We can see in Table ?? that the mean is quite small but similar for all stocks. Stock 1 and 3 in the IT sector have negative mean bu so have stock 3 in the Energy sector. The variance is quite similar between the stocks in the same sector but with higher variance for IT stocks than Energy stocks. The median are all positive except for IT stock 1 and 3. Let us also create boxplots for the different stocks.
@@ -342,7 +337,7 @@ data_returns_2 %>%
 
 In Figure ?? we can see the corresponding boxplots for the stocks. We note that there are some extreme cases. Most notably Energy stock 3 and IT stock 1 have some very big negative returns. Only IT stock 3 have an extreme case where the returns are positive up to about 0.25. Now to represent the possible distributions of the stocks we will create histograms. 
 
-```{r, fig.cap="Histogram for the 6 different stocks."}
+```{r, fig.cap="Histogram for the returns of the 6 different stocks."}
 # histograms for the stocks  
 data_returns_2 %>% 
   ggplot(aes(x = returns, y = after_stat(density))) +
@@ -424,19 +419,22 @@ rstan::extract(model_fit, pars = "y_rep") %>%
   pivot_longer(everything(), names_to = "stock", values_to = "returns") %>% 
   group_by(stock) %>% 
   summarise(mean = mean(returns), variance = var(returns), median = median(returns)) %>% 
-  kable(align = "c")
+  kable(
+    align = "c", 
+    caption = "Shwing the mean, variance and median based on a sample from the 
+    posterior predictive distribution.")
 ```
 
 As we can see the summary statistics in Table ?? differ from the ones we got in Table ??. We have larger mean, variances and median for all of the stocks. Some stocks have reversed sign of the means. So our model does not seem to be able to be able to predict the returns of the stocks that well. This could be a consequence of our model specification where we may have not been able to capture the properties of the data. Let us now look at the convergence diagnostics of our model. First we can look at $\alpha$, $\beta$, $sigma^2$ and $\mu_0$.
 
-```{r}
+```{r, fig.cap="Traceplots for $\\alpha$, $\\beta$, $\\sigma^2$ and $\\mu_0$ with 4 chains each. A warmup of size 10000 was removed from the total of 20000 iterations."}
 traceplot(model_fit, pars =c("alpha", "beta", "sigma_2", "mu_0"))
 ```
 
 In Figure ?? we can see the traceplots of the parameters $\alpha$, $\beta$, $sigma^2$ and $\mu_0$. We note that all parameters except $\mu_0$ only take positive values which is exactly what we want. Visually convergence seem to be reached but we should also combine this with some quantitative method. The Gelman-Rubin statistic is calculated in \texttt{Rstan} and is denoted Rhat. A value of less than 1.01 could imply that convergence is reached. Now let us take a look at the more interesting parameters. 
 
-```{r}
-traceplot(model_fit, pars = "mu")
+```{r, fig.cap="Traceplots for the elements of the mean vector $\\boldsymbol{\\mu}$ with 4 chains each. A warmup of size 10000 was removed from the total of 20000 iterations."}
+traceplot(model_fit, pars = "mu") 
 ```
 
 In Figure ?? we can see the traceplots of the mean vector. Visually it seems that we have reached some sort of convergence but we will combine this with The Gelman-Rubin statistic. In \texttt{Rstan} this statistic is calculated and denoted Rhat.   
@@ -448,20 +446,23 @@ summary(model_fit)$summary[,"Rhat"] %>%
   rename("Rhat" = ".") %>% 
   filter(grepl("mu", parameter) & parameter != "mu_0") %>%
   pivot_wider(names_from = "parameter", values_from = "Rhat") %>% 
-  kable(align = "c")
+  kable(
+    align = "c",
+    col.names = c("$\\mu_1$", "$\\mu_2$", "$\\mu_3$", "$\\mu_4$", "$\\mu_5$", "$\\mu_6$"),
+    caption = "Rhat values (Gelman-Rubin statistic) for the elements in the mean vector $\\boldsymbol{\\mu}$.")
 
 #summary(model_fit)$summary[,"Rhat"] #Rhat for all parameters 
 ```
 
 In Table ?? we can see the Rhat values of the mean vector and all of them are less than 1.01 which then imply that convergence of the chains is reached. We will not look at all the traceplots for the parameters since it will become quite many of them. The Rhat value is easy to check for every parameter and when doing this one find that Rhat is less than 1.01 for every parameter in our model. So we seem to get convergence by quantitative methods. we can also look at the autocorrelation plots. Starting with the mean vector $\boldsymbol{\mu}$. 
 
-```{r}
+```{r, fig.cap="Autocorrealtion plot of the elements in the mean vector $\\boldsymbol{\\mu}$. The autocorrelation is averaged over all the 4 chains."}
 stan_ac(model_fit, pars = "mu")
 ```
 
 We can see In Figure ?? the autocorrelation plot of the mean vector. Note that the autocorrelation drops rather quickly as the time lag increases. This is desired since MCMC creates a autocorrelated sample and we want the correlation to be as small as possibly. Acceptable range of autocorrelation is as always difficult to say and varies from time to time, but here we at least seem to get it quite low. We can also do the same analysis for the variance of the stocks by looking at the diagonal elements in the covariance matrix. The Rhat value is less than 1.01 as mentioned before. 
 
-```{r}
+```{r, fig.cap="Traceplots for the variance of the returns, i.e. the diagonal elements in the covariance matrix $\\boldsymbol{\\Sigma}$."}
 traceplot(
   model_fit, 
   pars = c(
@@ -477,7 +478,7 @@ traceplot(
 
 The traceplots of the variances can be seen in Figure ??. First thing to note is that they only take positive values as a variance should. Visually we can argue for convergence. The traceplots all seem to move around 1 which is supported by our calculations of the sample variance in Table ??. We can also see in Figure ?? the autocorrelation plots of the variances and may note that the autocorrelation is more present than in the case of the mean. It stays larger for longer and does not drop as rapidly. So the sample for the variances are more autocorrelated than the mean but the results can still be acceptable.  
 
-```{r}
+```{r, fig.cap="Autocorrelation plots for the variance elements in the covariance matrix $\\boldsymbol{\\Sigma}$."}
 stan_ac(
   model_fit, 
   pars = c(
@@ -495,7 +496,7 @@ stan_ac(
 
 Now we will take some look at the non-diagonal elements in the covariance matrix as well. This is since we discussed before they have expected value 0 but we do not know about their variances. The Rhat is less than 1.01 for every non-diagonal element and we will take a look on the upper right part of the covariance matrix that corresponds to the 0 block.
 
-```{r}
+```{r, fig.height=4, fig.cap="Traceplots for the upper non-diagonal elements corresponding to covariances between the stocks, i.e. the upper non-diagonal elements in the covariance matrix $\\boldsymbol{\\Sigma}$."}
 traceplot(
   model_fit, 
   pars = c(
@@ -514,7 +515,7 @@ traceplot(
 
 We can see in Figure ?? that the traceplots for the covariance between sectors are moving close to 0. This is nice since then we see that the property of uncorrelated sectors seems to hold somewhat fine. Visually convergence seem to be attained. The other non-diagonal elements of the covariance matrix that correspond to the upper elements in $\alpha\textbf{P}_A$ we get the following traceplots seen in Figure ??. The traceplots only take positive values as for the diagonal elements but they seem to be smaller or rather have less variance. So we retain the positive correlation between stocks in the same sector.   
 
-```{r}
+```{r, fig.cap="Traceplots of the non-diagonal elements in the covariance matrix $\\boldsymbol{\\Sigma}$ corresponding to the non-diagonal elements in the $\\alpha\\textbf{P}_A$ block of the matrix $\\textbf{P}_0$ matrix in the model setup."}
 traceplot(
   model_fit, 
   pars = c(
