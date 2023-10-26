@@ -372,7 +372,7 @@ Now let us take a look on the mean vector in our model namely
 $$
 \boldsymbol{\mu}|\mu_0, \sigma^2 \sim N(\mu_0 \boldsymbol{1}, \sigma^2 \boldsymbol{I}).
 $$
-We can see that each element in the vector has mean $\mu_0 \sim N(0,1)$ and variance $\sigma^2 \sim \text{Inv-Gamma}(1, 1)$. Each element in the mean vector is also uncorrelated so that we assume that the expected value of the returns of each stock is independent of the other stocks. This is fine since the correlation between stocks in same sectors are already accounted for as we have mentioned. Also to think that the expected value of the returns are independent is valid. This is because say that a company performs well and get a nice returns and thus large expected returns. If another company in the same sector is not well managed and then performs poor, this should not really affect other companies expected return in the same sector (probably not much however). The parameter $\mu_0$ is standard normal and should just allow companies to have different means in the distribution of $\boldsymbol{\mu}$. The parameter $\sigma^2$ is inverse gamma distributed meaning that it can only take positive values.    
+We can see that each element in the vector has mean $\mu_0 \sim N(0,1)$ and variance $\sigma^2 \sim \text{Inv-Gamma}(1, 1)$. Each element in the mean vector is also uncorrelated so that we assume that the expected value of the returns of each stock is independent of the other stocks. This is fine since the correlation between stocks in same sectors are already accounted for as we have mentioned. Also to think that the expected value of the returns are independent is valid. This is because say that a company performs well and get a nice returns and thus large expected returns. If another company in the same sector is not well managed and then performs poor, this should not really affect other companies expected return in the same sector (probably not much however). The parameter $\mu_0$ is standard normal and makes each company having the same expected value in the distribution of $\boldsymbol{\mu}$. The parameter $\sigma^2$ is inverse gamma distributed meaning that it can only take positive values.    
 
 With our model defined and set up in \texttt{Rstan} we can start looking at how well it performs. First we will conduct posterior predictive checks. We will get a sample from the posterior predictive distribution and derive the summary statistics for it. 
 
@@ -411,8 +411,8 @@ model_fit <- stan(
   "stan_model_6.stan",
   data = model_data,
   chains = 4, 
-  iter = 20000, 
-  warmup = 10000,
+  iter = 30000, 
+  warmup = 20000,
   seed = 990108,
   cores = 4
   )
