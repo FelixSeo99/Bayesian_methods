@@ -329,12 +329,12 @@ data_returns_2 %>%
     variance = var(returns), 
     median = median(returns)
   ) %>% 
-  kable(align = "c")
+  kable(align = "c", caption = "Showing the")
 ```
 
 We can see in Table ?? that the mean is quite small but similar for all stocks. Stock 1 and 3 in the IT sector have negative mean bu so have stock 3 in the Energy sector. The variance is quite similar between the stocks in the same sector but with higher variance for IT stocks than Energy stocks. The median are all positive except for IT stock 1 and 3. Let us also create boxplots for the different stocks.
 
-```{r}
+```{r, fig.cap = "Boxplot of the returns of the 6 different stocks."}
 data_returns_2 %>% 
   ggplot(aes(x = stock, y = returns)) +
   geom_boxplot()
@@ -342,11 +342,11 @@ data_returns_2 %>%
 
 In Figure ?? we can see the corresponding boxplots for the stocks. We note that there are some extreme cases. Most notably Energy stock 3 and IT stock 1 have some very big negative returns. Only IT stock 3 have an extreme case where the returns are positive up to about 0.25. Now to represent the possible distributions of the stocks we will create histograms. 
 
-```{r}
+```{r, fig.cap="Histogram for the 6 different stocks."}
 # histograms for the stocks  
 data_returns_2 %>% 
   ggplot(aes(x = returns, y = after_stat(density))) +
-  geom_histogram(bins = 100) + 
+  geom_histogram(bins = 50) + 
   facet_wrap(~ stock)
 ```
 
