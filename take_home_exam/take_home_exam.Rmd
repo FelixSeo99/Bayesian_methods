@@ -1,12 +1,13 @@
 ---
 title: "Take Home Exam in Bayesian Methods"
 author: "Felix Seo"
-date: "2023-10-11"
+date: "2023-10-27"
 bibliography: references.bibtex
 output:
   pdf_document: 
     extra_dependencies: 
       amsmath: 
+      amssymb:
       float:
       caption: ["labelfont = bf", "font = small", "font = it"]
 ---
@@ -24,9 +25,749 @@ knitr::opts_chunk$set(
 )
 ```
 
+# Task 1
+
 \newcommand{\Cov}{\mathrm{Cov}}
 \newcommand{\E}{\mathrm{E}}
 \newcommand{\Var}{\mathrm{Var}}
+
+## Part a
+
+We suppose that $X_i | \theta \sim N(\mu, \theta)$ where $\mu$ is known. Since the $X_1, \dots , X_n$ are exchangeable random variables we know that for $x = (x_1, \dots , x_n)$ 
+\begin{equation*}
+    f(x|\theta) 
+    = 
+    \prod_{i=1}^n f(x_i|\theta) 
+    = 
+    \prod_{i=1}^n \frac{1}{\sqrt{2\pi \theta}} \exp{\left(-\frac{1}{2\theta} (x_i - \mu)^2\right)} 
+    =
+    \left(\frac{1}{\sqrt{2\pi}} \right)^n \theta^{-n/2} \exp{\left(-\frac{1}{2\theta} \sum_{i=1}^n (x_i - \mu)^2\right)}.
+\end{equation*}
+The log-likelihood becomes 
+\begin{equation*}
+    L(\theta) 
+    =
+    n\log{\left (\frac{1}{\sqrt{2 \pi}} \right )} - \frac{n}{2} \log{\theta} - \frac{1}{2\theta} \sum_{i = 1}^n (x_i - \mu)^2.
+\end{equation*}
+Taking the derivative wit respect to $\theta$ gives 
+\begin{equation*}
+    \frac{\partial}{\partial \theta} L(\theta) = -\frac{n}{2}\frac{1}{\theta} + \frac{1}{2 \theta^2} \sum_{i = 1}^n (x_i - \mu)
+\end{equation*}
+The fisher information becomes 
+\begin{align*}
+    \E \left(-\frac{\partial^2}{\partial \theta^2} L(\theta) \Big| \theta \right) 
+    & = 
+    -\E\left(\frac{\partial}{\partial \theta} \left(-\frac{n}{2}\frac{1}{\theta} + \frac{1}{2 \theta^2} \sum_{i = 1}^n (x_i - \mu) \right) \Big| \theta\right) \\
+    &= 
+    -\E\left(\frac{n}{2 \theta^2}-\frac{1}{\theta^3} \sum_{i=1}^n (x_i-\mu)^2 \Big| \theta \right) \\
+    &=
+    -\frac{n}{2 \theta^2}+\frac{1}{\theta^3} \E\left(\sum_i^n\left(x_1-\mu\right)^2 \mid \theta\right)
+\end{align*}
+Simplifying the expectation and using that $X_1, \dots, X_n$ are identically distributed because of exchangeability we have that
+\begin{align*}
+    \E\left(\sum^n\left(x_i-\mu\right)^2 \Big | \theta\right)
+    &=
+    \E \left(\sum_{i = 1}^n (x^2-2 x_i \mu + \mu^2) \big | \theta \right) \\
+    &=  
+    \sum_{i=1}^n (\E\left(x_i^2 |\theta\right)-2 \mu E\left(x_i | \theta\right)+E\left(\mu^2 | \theta) \right) \\ 
+    &=
+    \left(\sum_{i=1}^n E\left(x_i^2 \mid \theta\right)\right)-2 \mu^2 n+n \mu^2 \\
+    &= 
+    \left(\sum_{i=1}^n \Var(x_i | \theta) + \E(x_i | \theta)^2 \right) -n \mu^2 \\
+    &= 
+    \left(\sum_{i=1}^n \theta+\mu^2\right) - n \mu^2 \\
+    &=
+    n \theta + n \mu^2 - n \mu^2 \\
+    &=
+    n\theta.
+\end{align*}
+Hence we get 
+\begin{equation*}
+    \E \left(-\frac{\partial^2}{\partial \theta^2} L(\theta) \Big| \theta \right) 
+    =
+    -\frac{n}{2 \theta^2}+\frac{1}{\theta^3} \E\left(\sum_i^n\left(x_1-\mu\right)^2 \mid \theta\right) 
+    =
+    -\frac{n}{2 \theta^2}+\frac{1}{\theta^3} n\theta 
+    = 
+    -\frac{n}{2 \theta^2}+\frac{n}{\theta^2} 
+    = 
+    \frac{n}{2\theta^2} 
+    \propto 
+    \frac{1}{\theta^2}.
+\end{equation*}
+Then the Jeffreys prior becomes
+\begin{equation*}
+    J(\theta) 
+    \propto 
+    \sqrt{\text{det} \left(\E \left(-\frac{\partial^2}{\partial \theta^2} L(\theta) \Big| \theta \right) \right)} 
+    = 
+    \sqrt{\frac{1}{\theta^2}} 
+    =
+    \frac{1}{\theta},
+\end{equation*}
+where $\text{det}(\cdot)$ is the determinant.
+
+## Part b
+
+In this part we assume that $X_i | \theta \sim N(\mu, \sigma^2)$ with $\theta = (\mu, \sigma^2)$. We want to find Jeffreys prior for $\theta$. Following steps in previous part we first find the likelihood and use a property of exchangeability. Setting $x = (x_1, \dots, x_n)$ we get that 
+\begin{equation*}
+    f(x|\theta) 
+    =
+    \prod_{i = 1}^n f(x_i|\theta)
+    = 
+    \left(\frac{1}{\sqrt{2\pi}} \right)^n (\sigma^2)^{-n/2} \exp{\left(-\frac{1}{2\sigma^2} \sum_{i=1}^n (x_i - \mu)^2\right)}.
+\end{equation*}
+Setting $\gamma = \sigma^2$ so that $\theta = (\mu, \gamma)$ the log likelihood becomes 
+\begin{equation*}
+    L(\mu, \gamma) 
+    =
+    n \log \left(\frac{1}{\sqrt{2\pi}} \right) - \frac{n}{2} \log \gamma - \frac{1}{2\gamma} \sum_{i = 1}^n (x_i - \mu)^2.
+\end{equation*}
+The score vector we find by 
+\begin{equation*}
+    s(\mu, \gamma) 
+    = \left (\frac{\partial}{\partial \mu} L(\mu, \gamma),\ \frac{\partial}{\partial \gamma} L(\mu, \gamma) \right) 
+    =
+    \left (\frac{1}{\gamma} \sum_{i = 1}^n (x_i - \mu),\ -\frac{n}{2}\cdot \frac{1}{\gamma} + \frac{1}{2\gamma^2} \sum_{i = 1}^n (x_i - \mu)^2 \right)
+\end{equation*}
+The Fisher information matrix has elements for $\phi = (\phi_i, \ \phi_j)$ given by
+\begin{equation*}
+    [\mathcal{I}(\phi)]_{i,j} 
+    =
+    -\E \left( \frac{\partial^2}{\partial \phi_i \partial \phi_j} L(\phi) \Big| \phi \right). 
+\end{equation*}
+Calculating the corresponding derivatives step by step yields in our case with $\theta = (\mu, \gamma)$ that
+\begin{align*}
+    &\frac{\partial^2}{\partial\mu^2} L(\theta) 
+    =
+    \frac{\partial}{\partial \mu} \left ( \frac{1}{\gamma} \sum_{i = 1}^n (x_i - \mu) \right)
+    =
+    \frac{1}{\gamma} \sum_{i = 1}^n (-1) 
+    =
+    -\frac{n}{\gamma}, \\
+    &\frac{\partial^2}{\partial\gamma^2} L(\theta)
+    =
+    \frac{\partial}{\partial\gamma} \left(-\frac{n}{2}\cdot \frac{1}{\gamma} + \frac{1}{2\gamma^2} \sum_{i = 1}^n (x_i - \mu)^2 \right) 
+    =
+    \frac{n}{2\gamma^2} - \frac{1}{\gamma^3} \sum_{i = 1}^n (x_i - \mu)^2, \\
+    &\frac{\partial^2}{\partial\mu\partial\gamma} L(\theta) 
+    =
+    \frac{\partial}{\partial \gamma} \left ( \frac{1}{\gamma} \sum_{i = 1}^n (x_i - \mu) \right)
+    =
+    -\frac{1}{\gamma^2} \sum_{i = 1}^n (x_i - \mu) 
+    =
+    \frac{\partial^2}{\partial\gamma\partial\mu} L(\theta),
+\end{align*}
+where we in the last line of calculations used symmetry of the second derivatives. Now we are ready to derive the elements in the Fisher information matrix. First we have 
+\begin{equation*}
+    -\E \left ( \frac{\partial^2}{\partial\mu^2} L(\theta) \Big| \theta \right) 
+    =
+    -\E \left ( -\frac{n}{\gamma} \Big| \theta \right) 
+    =
+    \frac{n}{\gamma}
+\end{equation*}
+For the next element we need to calculate
+\begin{equation*}
+    -\E \left ( \frac{\partial^2}{\partial\gamma^2} L(\theta) \Big| \theta \right) 
+    =
+    -\E \left (  \frac{n}{2\gamma^2} - \frac{1}{\gamma^3} \sum_{i = 1}^n (x_i - \mu)^2 \Big | \theta \right) 
+    = 
+    -\frac{n}{2\gamma^2} + \frac{1}{\gamma^3} \E \left( \sum_{i = 1}^n (x_i - \mu)^2 \Big| \theta \right).
+\end{equation*}
+The expectation in the above calculations we have already calculated before but for a different variance. It can thus easily be found by consulting previous part that 
+\begin{equation*}
+    \E \left( \sum_{i = 1}^n (x_i - \mu)^2 \Big| \theta \right) = n\gamma,       
+\end{equation*}
+and this yields us that 
+\begin{equation*}
+    -\E \left ( \frac{\partial^2}{\partial\gamma^2} L(\theta) \Big| \theta \right) 
+    =
+    -\frac{n}{2\gamma^2} + \frac{1}{\gamma^3} \cdot n\gamma 
+    =
+    -\frac{n}{2\gamma^2} + \frac{n}{\gamma^2}
+    =
+    \frac{n}{2\gamma^2}.
+\end{equation*}
+Now to the last element we get
+\begin{equation*}
+    -\E \left ( \frac{\partial^2}{\partial\mu\partial\gamma} L(\theta) \Big| \theta \right) 
+    =
+    -\E \left ( -\frac{1}{\gamma^2} \sum_{i = 1}^n (x_i - \mu) \Big| \theta \right) 
+    = 
+    \frac{1}{\gamma^2} \sum_{i = 1}^n (\E(x_i|\theta) - \mu) 
+    = 
+    0 
+    = 
+    -\E \left ( \frac{\partial^2}{\partial\gamma\partial\mu} L(\theta) \Big| \theta \right). 
+\end{equation*}
+Now the Fisher information matrix becomes
+\begin{equation*}
+    \mathcal{I}(\theta) 
+    =
+    \begin{pmatrix}
+    \frac{n}{\gamma} & 0 \\
+    0 & \frac{n}{2\gamma^2}
+    \end{pmatrix},
+\end{equation*}
+Now letting $\gamma = \sigma^2$ we find that the determinant is easily derived as
+\begin{equation*}
+    \text{det}(\mathcal{I}(\theta)) 
+    =
+    \frac{n^2}{2(\sigma^2)^3}
+    =
+    \frac{n^2}{2\sigma^6}.
+\end{equation*}
+The Jeffreys prior becomes 
+\begin{equation*}
+    J(\theta) 
+    \propto
+    \sqrt{\text{det}(\mathcal{I}(\theta))}
+    =
+    \sqrt{\frac{n^2}{2\sigma^6}}
+    \propto
+    \frac{1}{\sigma^3}.
+\end{equation*}
+Let us compare the three cases of Jeffreys prior. For known variance and $X_i \sim N(\theta, \sigma^2)$ we got that Jeffreys prior $f(\theta) \propto 1$. For $X_i \sim N(\mu, \theta)$ with known mean $\mu$ we got Jeffreys prior for $\theta$ as $f(\theta) \propto \frac{1}{\theta}$. In the last case where we consider $X_i \sim N(\mu, \sigma^2)$ and $\theta = (\mu, \sigma^2)$ we got $f(\theta) \propto \frac{1}{\sigma^3}$. Setting $\theta = \sigma^2$ in the second case with unknown mean we would get that $f(\sigma^2) \propto \frac{1}{\sigma^2}$. In the location-scale family the common approach is to use the two noninformative priors gained in the univariate cases so that $f(\theta) = f(\mu, \sigma^2) = f(\mu)f(\sigma^2) \propto \frac{1}{\sigma^2}$, "imposing" some prior independence. But using Jeffreys prior directly on the multiparameter case gives a different form as we have seen [@carlin2008bayesian, p. 40].
+
+# Taks 2
+
+## Part a
+
+Let $X_1, \dots , X_n$ be exchangeable random variables with $X_i|\theta \sim Bernoulli(\theta)$. We will use the improper prior $f(\theta) = \theta^{-1}(1-\theta)^{-1}$. Since $X_1, \dots , X_n$ are exchangeable we have that for $x = (x_1, \dots, x_N)$ that
+\begin{align*}
+    f(\theta|x) 
+    &\propto
+    \left(\prod_{i = 1}^n f(x_i|\theta)\right) f(\theta) \\
+    &=
+    \left(\prod_{i = 1}^n \theta^{x_i}(1 - \theta)^{1-x_i}\right) \theta^{-1} (1 - \theta)^{-1} \\
+    &=
+    \theta^{\sum_{i=1}^n x_i}(1 - \theta)^{1-\sum_{i=1}^n x_i} \theta^{-1} (1 - \theta)^{-1} \\
+    &=
+    \theta^{n\bar{x} - 1}(1 - \theta)^{n - n\bar{x} - 1},
+\end{align*}
+where $\bar{x} = \sum_{i=1}^n x_i$. Note that this is a kernel of a Beta distribution, namely $f(\theta|x) \sim Beta(n\bar{x}, n - n\bar{x})$. We know that a normal approximation around the mode $\tilde{\theta}$ is given by $N(\tilde{\theta}, I(\tilde{\theta} | x)^{-1})$ where $I(\theta|x)$ is the observed Fisher information. The mode for our Beta distribution is given by 
+\begin{equation*}
+    \tilde{\theta} = \frac{n\bar{x} - 1}{n - 2}.
+\end{equation*}
+The observed Fisher information is given by 
+\begin{align*}
+    I(\theta|x) 
+    &=
+    -\frac{d^2}{d\theta^2}\log{f(\theta|x)} \\
+    &= 
+    -\frac{d^2}{d\theta^2} ((n\bar{x} - 1) \log{\theta} + (n - n\bar{x} - 1)\log(1 - \theta)) \\
+    &= 
+    -\frac{d}{d\theta} \left((n\bar{x} - 1) \frac{1}{\theta} - (n - n\bar{x} - 1) \frac{1}{1 - \theta} \right) \\
+    &=
+    - \left( - (n\bar{x} - 1) \frac{1}{\theta^2} - (n - n\bar{x} - 1) \frac{1}{(1 - \theta)^2} \right) \\
+    &=
+    (n\bar{x} - 1) \frac{1}{\theta^2} + (n - n\bar{x} - 1) \frac{1}{(1 - \theta)^2}. 
+\end{align*}
+Inserting the mode $\tilde{\theta}$ into this will give after some calculations  
+\begin{equation*}
+    I(\tilde{\theta} | x) = \frac{(n - 2)^3}{(n\bar{x} - 1)(n - n\bar{x} -1)}.
+\end{equation*}
+Then we will have that 
+\begin{equation*}
+    f(\theta | x) \overset{a}{\sim} N \left(\frac{n\bar{x} - 1}{n - 2}, \frac{(n\bar{x} - 1)(n - n\bar{x} - 1)}{(n - 2)^3} \right)
+\end{equation*}
+around the mode $\tilde{\theta}$.
+
+## Part b
+
+Using the change of variables for density of $\theta$ and $\beta = g(\theta)$ we have that
+\begin{equation}
+    f_\beta (\beta) = f_\theta ( \theta) \left |\frac{d\theta}{d\beta} \right |.
+\end{equation}
+We find that 
+\begin{equation*}
+    \beta = \log{\frac{\theta}{1 - \theta}}\ \Longleftrightarrow\ \theta = \frac{e^\beta}{1 + e^\beta}. 
+\end{equation*}
+One can easily find that using the quotient rule for derivatives that
+\begin{equation*}
+    \frac{d\theta}{d\beta} = \frac{e^\beta}{(1 + e^\beta)^2}
+\end{equation*}
+and now using equation (1) we get that 
+\begin{align*}
+    f_\beta (\beta) 
+    &\propto 
+    f_\theta (\theta ( \beta)) \left |\frac{d\theta}{d\beta} \right | \\
+    &= 
+    \left ( \frac{e^\beta}{1 + e^\beta} \right)^{-1} \left ( 1 - \frac{e^\beta}{1 + e^\beta} \right)^{-1} \left| \frac{e^\beta}{(1 + e^\beta)^2} \right | \\
+    &= 
+    \frac{1 + e^\beta}{e^\beta} \cdot (1 + e^\beta)\cdot \frac{e^\beta}{(1 + e^\beta)^2} \\
+    &= 
+    1.
+\end{align*}
+Thus we have shown that the prior $f(\theta)$ is equivalent to a uniform prior on $\beta$. The posterior $f(\beta | x)$ can be derived as 
+\begin{align*}
+    f(\beta | x) 
+    &\propto 
+    f(x|\beta) f(\beta) \\
+    &\propto
+    f(x|\beta) \\
+    &= 
+    \left ( \frac{e^\beta}{1 + e^\beta} \right)^{n\bar{x}} \left ( 1 - \frac{e^\beta}{1 + e^\beta} \right)^{n - n\bar{x}} \\
+    &=
+    \frac{e^{n\bar{x} \beta}}{(1 + e^\beta)^{n}} \\
+    &= 
+    \frac{e^{n\bar{x} \beta}}{(1 + e^\beta)^{n\bar{x} + (n - n\bar{x})}}.
+\end{align*}
+The first equality follows from similar calculations in part a where we found the posterior distribution $f(\theta | x)$ by using the exchangeability property. The difference here is that our prior disappears since $f(\beta) \propto 1$. The above is actually a kernel of a special type of distribution called the generalized logistic distribution [@Gen_log]. The posterior will the be of the form 
+\begin{equation*}
+    f(\beta | x) = \frac{1}{B(n\bar{x}, n - n\bar{x})} \cdot \frac{e^{n\bar{x} \beta}}{(1 + e^\beta)^{n\bar{x} + (n - n\bar{x})}}
+\end{equation*}
+where $B(\cdot,\cdot)$ is the beta function. The mode of a distribution is the value that maximizes the distribution function. This means that we want to find the $\beta$ that maximizes the distribution $f(\beta | x)$. This is equivalent to maximizing the logarithm of the distribution. We have that 
+\begin{equation*}
+    \log{f(\beta | x)} = \log{\left( \frac{1}{B(n\bar{x}, n - n\bar{x})} \right)} + n\bar{x}\beta - n\log{(1 + e^\beta)}.
+\end{equation*}
+The derivative is equal to 
+\begin{equation}
+    \frac{d}{d\beta} \log{f(\beta | x)} = n\bar{x} - n \frac{e^\beta}{1 + e^\beta} \overset{!}{=} 0,
+\end{equation}
+and the $\beta$ satisfying this equation can be found to be $\tilde{\beta} = \log{(\bar{x} / (1 - \bar{x}))}$ which is then the mode. Now we focus on finding the observed Fisher information. Observe that we have already derived the score function (derivative of the log likelihood) in (2) so the observed Fisher information can easily be found to be  
+\begin{equation*}
+    I(\beta | x) = - \frac{d^2}{d\beta^2} \log{f(\beta | x)} = n \frac{e^\beta}{(1 + e^\beta)^2}.
+\end{equation*}
+Now using the mode we find that
+\begin{equation*}
+    I(\tilde{\beta} | x) 
+    = 
+    n \frac{\frac{\bar{x}}{1 -\bar{x}}}{(1 + \frac{\bar{x}}{1 - \bar{x}})^2} 
+    = 
+    n \frac{\frac{\bar{x}}{1 -\bar{x}}}{(\frac{1}{1 - \bar{x}})^2} 
+    =
+    n\bar{x}(1 - \bar{x}).
+\end{equation*}
+Then we will have that 
+\begin{equation*}
+    f(\beta | x) \overset{a}{\sim} N \left(\log{\frac{\bar{x}}{1 - \bar{x}}} ,\ \frac{1}{n\bar{x}(1 - \bar{x})} \right)
+\end{equation*}
+around the mode $\tilde{\beta}$.
+
+## Part c
+
+What we are trying to do in the previous parts is to approximate the posterior for $f(\theta |x)$ or in other parameterization $f(\beta | x)$ with a normal distribution around the mode. We are interested in the parameter $\theta$, which is between 0 and 1, as $X_i|\theta$ is Bernoulli distributed with parameter $\theta$. So we would want our approximations to only output values between 0 or 1. Hence in the first part where we approximate the posterior $f(\theta |x)$ by a normal approximation around the mode we can get in theory any values on the real line. This is obviously not ideal. 
+
+In the second part we use another parameterization $\beta = \log{\theta / (1 - \theta)}$ which for $\theta \in (0, 1)$ can output any number on the real line. This parameterization is then desired since we approximate $\beta \in (-\infty, \infty)$ by a normal distribution and we can always translate back to $\theta$ which we then know will always be between 0 and 1.
+
+# Task 3
+
+## Part a
+
+Let $X|\mu \sim N(\mu, \sigma^2)$ and $Y|\mu, \delta \sim N(\mu + \delta, \sigma^2)$ where $\sigma^2$ is known and $X$ and $Y$ are conditionally independent given $\mu$ and $\delta$. We also assume that $f(\mu, \delta) \propto 1$. The joint posterior distribution of $\mu$ and $\delta$ given $X$ and $Y$ is given by 
+\begin{align*}
+    f(\mu, \delta| x, y) 
+    &\propto 
+    f(x, y|\mu, \delta) f(\mu, \delta) \\
+    &\propto 
+    f(x, y|\mu, \delta) \\
+    &= 
+    \{\text{conditional independence} \} \\
+    &= 
+    f(x|\mu, \delta) f(y|\mu, \delta) \\
+    &= 
+    f(x|\mu) f(y|\mu, \delta)
+\end{align*}
+Now inserting the distributions for $f(x|\mu)$ and $f(y|\mu, \delta)$ we get 
+\begin{equation}
+    f(\mu, \delta| x, y) 
+    \propto
+    \left (\frac{1}{\sqrt{2\pi\sigma^2}}\right )^2 \exp{\left (- \frac{(x - \mu)^2 + (y - (\mu + \delta))^2}{2\sigma^2} \right )}.
+\end{equation}
+This have the appearance of a bivariate normal distributions. Here we make an anzats that the mean vector will be 
+\begin{equation*}
+    \begin{pmatrix}
+    \E(\mu|x,y) \\
+    \E(\delta|x,y)
+    \end{pmatrix}
+    =
+    \begin{pmatrix}
+    x \\
+    y - x
+    \end{pmatrix}.
+\end{equation*}
+we can also say that looking at (3) that the determinant of the covariance matrix $\Sigma$ should be equal to
+\begin{equation*}
+    |\Sigma| 
+    =
+    \begin{vmatrix}
+     a & c \\
+     c & b
+    \end{vmatrix}
+    =
+    ab - c^2
+    =
+    \sigma^4
+\end{equation*}
+for some constants $a, b$ and $c$. The inverse of the covariance matrix equals 
+\begin{equation*}
+    \Sigma^{-1} 
+    =
+    \frac{1}{|\Sigma|}
+    \begin{pmatrix}
+    b & -c \\
+    -c & a
+    \end{pmatrix}
+    =
+    \frac{1}{\sigma^4}
+    \begin{pmatrix}
+    b & -c \\
+    -c & a
+    \end{pmatrix}.
+\end{equation*}
+Omitting the factor $1/\sigma^4$ for now, we can derive the expression in the exponent for a bivariate normal distribution. We have that
+\begin{multline*}
+    (\mu - x, \delta - (y - x))
+    \begin{pmatrix}
+    b & -c \\
+    -c & a
+    \end{pmatrix}
+    \begin{pmatrix}
+    \mu - x \\
+    \delta - (y-x)
+    \end{pmatrix}
+    = \\
+    (b\mu - bx - c\delta + cy - cx, -c\mu + cx + a\delta - ay + ax)
+    \begin{pmatrix}
+    \mu - x \\
+    \delta - (y - x)
+    \end{pmatrix}
+    = \\
+    (b\mu - bx - c\delta + cy - cx)(\mu - x) + (-c\mu + cx + a\delta - ay + ax)(\delta - y + x)  
+    = \\
+    b\mu^2 + (-2b - 2c)\mu x + (b + 2c + a)x^2 - 2c\delta\mu \\
+    + (2c + 2a)\delta x + 2c\mu y + (-2c - 2a)yx + a\delta^2 - 2a\delta y + ay^2.
+\end{multline*}
+Since we are considering the inside of an exponent we can always add or remove terms to the expression above only containing x and y since then we will have proportionality with respect to $\delta$ and $\mu$. This means that in the above we have 
+\begin{multline}
+    (\mu - x, \delta - (y - x))
+    \begin{pmatrix}
+    b & -c \\
+    -c & a
+    \end{pmatrix}
+    \begin{pmatrix}
+    \mu - x \\
+    \delta - (y-x)
+    \end{pmatrix}
+    \propto \\
+    b\mu^2 + (-2b - 2c)\mu x - 2c\delta\mu + (2c + 2a)\delta x + 2c\mu y + a\delta^2 - 2a\delta y.
+\end{multline}
+Note now that from the exponent in (3) we have that
+\begin{equation*}
+    (x - \mu)^2 + (y - (\mu + \delta))^2 
+    =
+    2\mu^2 + \delta^2 -2\delta\mu - 2\mu x - 2\mu y + x^2 + y^2 + 2\delta y
+\end{equation*}
+Comparing the above and (4) and neglecting terms not containing $\mu$ or $\delta$, we want to find $a, b$ and $c$ such that 
+\begin{equation*}
+    \begin{cases}
+    b = 2\sigma^2 \\
+    -2b-2c = -2\sigma^2 \\
+    -2c = 2\sigma^2 \\
+    2c+2a = 0 \\
+    2c = -2\sigma^2 \\
+    a = \sigma^2 \\
+    -2a = -2\sigma^2
+    \end{cases}
+\end{equation*}
+where the $\sigma^2$ comes from the fact that we omitted a factor of $1 / \sigma^4$ in our calculations before and want to end up with a factor $1/\sigma^2$ so we get form of (3). The system of equations we see is easily solved by $a = \sigma^2, b = 2\sigma^2$ and $c = -\sigma^2$. The covariance matrix is then 
+\begin{equation*}
+    \Sigma 
+    =
+    \begin{pmatrix}
+    a & c \\
+    c & b
+    \end{pmatrix}
+    =
+    \begin{pmatrix}
+    \sigma^2 & -\sigma^2 \\
+    -\sigma^2 & 2\sigma^2
+    \end{pmatrix}.
+\end{equation*}
+This means that our anzats was correct and we have hence found the the joint posterior distribution of $\mu$ and $\delta$ given $X$ and $Y$. The joint posterior is namely bivariate normal, that is 
+\begin{equation*}
+    \mu, \delta|x,y 
+    \sim
+    N \left (
+    \begin{pmatrix}
+    x \\
+    y - x
+    \end{pmatrix}
+    ,
+    \begin{pmatrix}
+    \sigma^2 & -\sigma^2 \\
+    -\sigma^2 & 2\sigma^2
+    \end{pmatrix}
+    \right).
+\end{equation*}
+
+## Part b
+
+Let now $Z|\mu, \delta \sim N(\mu - \delta, \sigma^2)$ and also $Z$ is conditionally independent of $X$ and $Y$ given $\mu$ and $\delta$. We want to find the distribution $f(z|x, y)$. First thing to note is that 
+\begin{multline}
+    f(z|x, y, \mu, \delta) 
+    = 
+    \frac{f(z, x, y, \mu, \delta)}{f(x, y, \mu, \delta)} 
+    =
+    \frac{f(z, x, y| \mu, \delta) f(\mu, \delta)}{f(x, y| \mu, \delta) f(\mu, \delta)} 
+    =
+    \frac{f(z, x, y| \mu, \delta)}{f(x, y| \mu, \delta)} \\
+    =
+    \{\text{conditional independence}\} 
+    =
+    \frac{f(z| \mu, \delta) f(x, y| \mu, \delta)}{f(x, y| \mu, \delta)} 
+    =
+    f(z| \mu, \delta).
+\end{multline}
+We also know that we can write
+\begin{equation}
+    f(z|x, y) 
+    =
+    \int_M \int_\Delta f(z, \mu, \delta|x, y) d\mu d\delta,
+\end{equation}
+where $M = \Delta = \mathbb{R}$ is the whole real line. The integrand in (6) can be rewritten, namely 
+\begin{multline*}
+    f(z, \mu, \delta|x, y) 
+    =
+    \frac{f(z, x, y, \mu, \delta)}{f(x, y)}
+    =
+    \frac{f(z| x, y, \mu, \delta) f(x, y, \mu, \delta)}{f(x, y)}
+    = \\
+    f(z| \mu, \delta)\frac{f(x, y, \mu, \delta)}{f(x, y)}
+    =
+    f(z|\mu, \delta) f(\mu, \delta| x, y)
+\end{multline*}
+where for the third equality we used our calculations in (5). This calcualtion was done since we from part a have the distribution of $f(\mu, \delta| x, y)$ and can use the form in (3).  Also $Z|\mu, \delta \sim N(\mu - \delta, \sigma^2)$. So inserting this in (6) we get 
+\begin{multline}
+    f(z|x, y) 
+    =
+    \int_M \int_\Delta f(z, \mu, \delta|x, y) d\mu d\delta 
+    \propto \\
+    \int_M \int_\Delta \exp{\left ( -\frac{1}{2\sigma^2} (z - (\mu -\delta))^2 \right)} 
+    \exp{\left( -\frac{1}{2\sigma^2} ((x - \mu)^2 + (y - (\mu + \delta))^2 \right)} d\mu d\delta \\
+    \propto 
+    \exp{\left ( -\frac{z^2}{2\sigma^2} \right)} \int_M \exp{\left ( -\frac{-2z\mu + 3\mu^2 - 2x\mu - 2y\mu}{2\sigma^2}\right)} d\mu \\ 
+    \int_\Delta \exp{\left ( -\frac{2z\delta + 2\delta^2 - 2y\delta}{2\sigma^2}\right)} d\delta.
+\end{multline}
+Some tedious but simple calculations were skipped in the above. But now let us focus on one integral at the time. First we get that
+\begin{multline*}
+    \int_M \exp{\left ( -\frac{-2z\mu + 3\mu^2 - 2x\mu - 2y\mu}{2\sigma^2}\right)} d\mu 
+    = \\
+    \int_M \exp{\left ( -\frac{3}{2\sigma^2} \left( \left(\mu - \frac{x + y + z}{3} \right)^2 - \frac{(x + y + z)^2}{9} \right)\right)}  d\mu
+    = \\
+    \exp{\left ( \frac{3}{2\sigma^2} \frac{(x +y+z)^2}{9}\right)} \int_M \exp{\left ( -\frac{3}{2\sigma^2} \left( \mu - \frac{x + y + z}{3} \right)^2 \right)}  d\mu 
+    \propto \\
+    \exp{\left ( \frac{3}{2\sigma^2} \frac{(x +y+z)^2}{9}\right)}.
+\end{multline*}
+The last line follows since the integrand is a kernel of a normal distribution. Now for the second integral in (7) we get 
+\begin{multline*}
+    \int_\Delta \exp{\left ( -\frac{2z\delta + 2\delta^2 - 2y\delta}{2\sigma^2}\right)} d\delta 
+    =
+    \int_\Delta \exp{\left ( -\frac{1}{\sigma^2} (\delta^2 - \delta(y -z)) \right)} d\delta
+    = \\
+    \int_\Delta \exp{\left ( -\frac{1}{\sigma^2} \left(\left(\delta - \frac{(y -z)}{2}\right)^2 - \frac{(y-z)^2}{4} \right)\right)} d\delta
+    = \\
+    \exp{\left( \frac{1}{\sigma^2}\frac{(y - z)^2}{4}\right)}\int_\Delta \exp{\left (-\frac{1}{\sigma^2} \left(\delta - \frac{(y -z)}{2}\right)^2 \right)} d\delta
+    \propto \\
+    \exp{\left( \frac{1}{\sigma^2}\frac{(y - z)^2}{4}\right)}.
+\end{multline*}
+Now we can insert our calculations in equation (7) and we get 
+\begin{align*}
+    f(z|x, y) 
+    &= 
+    \exp{\left ( -\frac{z^2}{2\sigma^2} \right)}\exp{\left ( \frac{3}{2\sigma^2} \frac{(x +y+z)^2}{9}\right)}\exp{\left( \frac{1}{\sigma^2}\frac{(y - z)^2}{4}\right)} \\
+    &=
+    \exp{\left( -\frac{1}{12\sigma^2} (6z^2 - 2(x + y + z)^2 - 3(y-z)^2)\right)} \\
+    &\propto
+    \exp{\left( -\frac{1}{12\sigma^2} (z^2 - 4xz + 2yz) \right)} \\
+    &=
+    \exp{\left( -\frac{1}{12\sigma^2} ((z - (2x - y))^2 - (2x - y)^2 )\right)} \\
+    &\propto
+    \exp{\left( -\frac{1}{12\sigma^2} (z - (2x - y))^2 \right)}.
+\end{align*}
+We observe that the above is a kernel of a normal distribution with mean $2x- y$ and variance $6\sigma^2$. Thus we have found that $f(z |x, y) \sim N(2x-y, 6\sigma^2)$.
+
+# Task 4
+
+## Part a
+
+Let $x$ be a sample from a normal distribution $N(\theta, \sigma^2)$ with known $\sigma^2$ but unknown $\theta \in [0, 1]$. We want to show that the mean squared error of the maximum likelihood estimate is bigger than that of the posterior mean if $\sigma^2$ is large enough for any $\theta \in [0, 1]$. The maximum likelihood estimate $\hat{\theta}_{M}$ is restricted to the range $[0,1]$. The idea is to derive the distributions of the posterior mean and maximum likelihood estimate when we let $\sigma \to \infty$. Then if the mean squared error is higher for the maximum likelihood estimator, we have shown that there is some $\sigma$ large enough so that this will hold. 
+
+Starting with the posterior distribution we have that with standard uniform prior 
+\begin{equation*}
+    f(\theta|x) 
+    \propto 
+    f(x | \theta) f(\theta)
+    =
+    \frac{1}{\sqrt{2\pi\sigma^2}} \exp{\left(- \frac{1}{2\sigma^2} (x - \theta)^2\right)} \cdot \boldsymbol{1}(\theta \in [0, 1])
+\end{equation*}
+where $\boldsymbol{1}$ is the indicator function. Now let $y\in [0, 1]$ and $Z$ be standard normal, then we have that the cumulative distribution function is
+\begin{align*}
+    P(\theta \leq y | x) 
+    &=
+    P(0 \leq \sigma \cdot Z + x\leq y | 0 \leq \sigma \cdot Z + x\leq 1) \\
+    &= 
+    P \left( -\frac{x}{\sigma} \leq Z \leq \frac{y - x}{\sigma} \Big| -\frac{x}{\sigma} \leq Z \leq \frac{1 - x}{\sigma} \right) \\
+    &= 
+    \frac{P \left( -\frac{x}{\sigma} \leq Z \leq \frac{y - x}{\sigma} , -\frac{x}{\sigma} \leq Z \leq \frac{1 - x}{\sigma} \right)}
+    {P \left( -\frac{x}{\sigma} \leq Z \leq \frac{1 - x}{\sigma} \right)} \\
+    &=
+    \frac{P \left( -\frac{x}{\sigma} \leq Z \leq \frac{y - x}{\sigma}\right)}{P \left( -\frac{x}{\sigma} \leq Z \leq \frac{1 - x}{\sigma} \right)}
+\end{align*}
+where the last equality follows since the first event in the joint probability will account for the second event ($(y - x)/\sigma$ is less than or equal to $(1- x)/\sigma$ since $y\in[0, 1]$). The above is just the cumulative distribution function for standard normal variables. Hence, letting $\Phi$ be the cumulative distribution function for a standard normal random variable the above can be written as
+\begin{equation}
+    \frac{\Phi\left(\frac{y - x}{\sigma}\right) - \Phi\left(-\frac{x}{\sigma}\right)}
+    {\Phi\left(\frac{1 - x}{\sigma}\right) - \Phi\left(-\frac{x}{\sigma}\right)}
+\end{equation}
+only using the fact that for cumulative distribution functions $P(a \leq Z \leq b) = F(b) - F(a)$. This is where we look at the resulting distribution when $\sigma \to \infty$, since the above distribution is difficult to find directly. We aim to use L'Hôpital's rule but first we derive the derivative of the numerator and denominator in (8) with respect to $\sigma$. We have that
+\begin{align*}
+    \frac{\partial}{\partial \sigma} \Phi\left(\frac{y - x}{\sigma}\right) 
+    &=
+    -\frac{y-x}{\sigma^2} \phi\left(\frac{y - x}{\sigma}\right), \\
+    \frac{\partial}{\partial \sigma} \Phi\left(\frac{1 - x}{\sigma}\right)
+    &=
+    -\frac{1-x}{\sigma^2} \phi\left(\frac{1 - x}{\sigma}\right), \\
+    \frac{\partial}{\partial \sigma} \Phi\left(-\frac{x}{\sigma}\right) 
+    &=
+    \frac{x}{\sigma^2} \phi\left(-\frac{x}{\sigma}\right),
+\end{align*}
+where $\phi$ is the density of a standard normal distribution. Using the above derivatives we can now use L'Hôpital's rule and get that 
+\begin{align*}
+    \lim_{\sigma \to \infty} 
+    \frac{\Phi\left(\frac{y - x}{\sigma}\right) - \Phi\left(-\frac{x}{\sigma}\right)}
+    {\Phi\left(\frac{1 - x}{\sigma}\right) - \Phi\left(-\frac{x}{\sigma}\right)}
+    &=
+    \lim_{\sigma \to \infty}
+    \frac{-\frac{y-x}{\sigma^2} \phi\left(\frac{y - x}{\sigma}\right) - \frac{x}{\sigma^2} \phi\left(-\frac{x}{\sigma}\right)}
+    {-\frac{1-x}{\sigma^2} \phi\left(\frac{1 - x}{\sigma}\right) - \frac{x}{\sigma^2} \phi\left(-\frac{x}{\sigma}\right)} \\
+    &=
+    \lim_{\sigma \to \infty}
+    \frac{-(y-x) \phi\left(\frac{y - x}{\sigma}\right) - x \phi\left(-\frac{x}{\sigma}\right)}
+    {-(1-x) \phi\left(\frac{1 - x}{\sigma}\right) - x \phi\left(-\frac{x}{\sigma}\right)} \\
+    &=
+    \lim_{\sigma \to \infty}
+    \frac{-y \phi\left(\frac{y - x}{\sigma}\right) + x \left(\phi\left(\frac{y - x}{\sigma}\right) - \phi\left(-\frac{x}{\sigma}\right)\right)}
+    {-\phi\left(\frac{1 - x}{\sigma}\right) + x \left(\phi\left(\frac{1 - x}{\sigma}\right) - \phi\left(-\frac{x}{\sigma}\right)\right)} \\
+    &=
+    \frac{-y \phi(0)}{-\phi(0)} \\
+    &= 
+    y.
+\end{align*}
+Hence we have found that the posterior distribution $\theta|x$ converge in distribution to a standard uniform distribution as $\sigma \to \infty$. So since $\theta|x \overset{d}{\sim} U(0,1)$ we get that the posterior mean is $\E(\theta|x) \to 1/2$ as $\sigma \to \infty$. 
+\\\\
+It is well known that the maximum likelihood estimate for the mean of a $N(\theta, \sigma^2)$ is the sample mean. Since we have one realization we get that maximum likelihood estimate of $\theta$ is $\hat{\theta}_{M} = x$. But since we restrict this estimate to $[0, 1]$ we set that if $x < 0$ then $\hat{\theta}_{M} = 0$ and if $x \geq 1$ then $\hat{\theta}_{M} = 1$ and if $x \in [0, 1]$ then $\hat{\theta}_{M}=x$. This means that for the cumulative distribution function of the maximum likelihood estimate that $P(\hat{\theta}_{M} \leq y) = 0$ if $y < 0$ and $P(\hat{\theta}_{M} \leq x) = 1$ if $y \geq 1$. Now for $y \in [0 , 1]$ we instead get 
+\begin{equation*}
+    P(\hat{\theta}_{M} \leq y)
+    =
+    P(x \leq y) 
+    =
+    P(\sigma Z + \theta \leq y)
+    =
+    P \left( Z \leq \frac{y - \theta}{\sigma} \right)
+    \to 
+    P(Z\leq 0),
+\end{equation*}
+as $\sigma \to \infty$. Note that $P(Z \leq 0 ) = 1/2$ since $Z$ is standard normal. With our previous observation of the cumulative distribution function for $x \notin [0, 1)$ we have that $\hat{\theta}_{M}$ converge in distribution to a Bernoulli distribution with parameter $p=1/2$ as $\sigma \to \infty$. Now we are ready to find the mean squared error for the two point estimates. First for the posterior mean as point estimate of $\theta$ we get that the mean squared error is 
+\begin{equation*}
+    \E((\E(\theta|x) - \theta)^2) 
+    =
+    \E\left(\left(\frac{1}{2} - \theta\right)^2\right)
+    =
+    \left(\frac{1}{2} - \theta\right)^2.
+\end{equation*}
+Since the maximum likelihood estimate $\hat{\theta}_{M}$ is Bernoulli(1/2) it has mean $1/2$ and variance $1/4$. The mean squared error for the maximum likelihood estimator of $\theta$ is given by 
+\begin{equation*}
+    \E((\theta_M - \theta)^2)
+    =
+    \E(\theta_M^2) - 2\theta\E(\theta_M) + \theta^2
+    =
+    \frac{1}{4} + \frac{1}{4} - \theta + \theta^2
+    =
+    \frac{1}{4} + \left(\frac{1}{2} - \theta\right)^2.
+\end{equation*}
+Comparing the results of the mean squared error for both point estimates we clearly see that the posterior mean gives smaller mean squared error for all $\theta \in [0, 1]$. This is true for the resulting distributions when we let $\sigma \to \infty$. This in turn means that for some $\sigma$ large enough we will have that the mean squared error is larger for the maximum likelihood estimate than the posterior mean, for the corresponding distributions when we choose this large enough $\sigma$.
+
+## Part b
+
+```{r, out.width="60%", fig.align="center", fig.cap="Conceptual image of the rejection sampling algorithm used for generating a sample to estimate the model posterior probabilities for use in model comparison."}
+include_graphics("IMG_1171.jpg")
+```
+
+So we will end up with a sample $\{m_{i*}, \theta_{m_{i*}}^{i*}\}$ as seen in Figure 1 of size $K \leq N$ where $1 \leq i \leq K$. The posterior probabilities is then approximated by
+\begin{equation*}
+    P(M = m| x_0) = \frac{\text{Number of}\ m_{i*} = m}{N}.
+\end{equation*}
+Once we have approximated the posterior probabilities we can use concepts of Bayesian model comparison. To compare the relative plausibility of the models we can compute the posterior ratio which is relates to the Bayes factor, that is 
+\begin{equation*}
+    \frac{P(m_1| x_0)}{P(m_2| x_0)}
+    =
+    \frac{P(x_0| m_1)P(m_1)}{P(x_0| m_2)P(m_2)}
+    =
+    B_{1, 2}\frac{P(m_1)}{P(m_2)}
+\end{equation*}
+where $B_{1, 2}$ is the Bayes factor. 
+
+\subsection*{Problem 5}
+
+\subsubsection*{Part a}
+
+With $y_i|\pi_i \sim Bin(n_i, \pi_i)$ and 
+\begin{equation*}
+    \pi_i 
+    =
+    \frac{1}{1 + \exp{(-(\alpha + \beta x_i))}}
+\end{equation*}
+we find that the likelihood for one observation is
+\begin{align*}
+    f(y_i|\pi_i)
+    &=
+    \binom{n_i}{y_i} \pi_i^{y_i} (1 - \pi_i)^{n_i - y_i} \\
+    &=
+    \binom{n_i}{y_i} \left(\frac{1}{1 + \exp{(-(\alpha + \beta x_i))}}\right)^{y_i} \left(1 - \frac{1}{1 + \exp{(-(\alpha + \beta x_i))}} \right)^{n_i - y_i}. 
+\end{align*}
+Assuming that the batches are independent and $n_i=5$ for all $i$ the likelihood for the full data is 
+\begin{align*}
+    f(y|\pi_i)
+    &= 
+    \prod_{i=1}^5\binom{5}{y_i} \pi_i^{y_i} (1 - \pi_i)^{5 - y_i} \\
+    &= 
+    \prod_{i=1}^5\binom{5}{y_i} \left(\frac{1}{1 + \exp{(-(\alpha + \beta x_i))}}\right)^{y_i} \left(\frac{\exp{(-(\alpha + \beta x_i))}}{1 + \exp{(-(\alpha + \beta x_i))}}\right)^{5 - y_i}.
+\end{align*}
+The log likelihood is given by 
+\begin{align*}
+    \log{f(y|\pi_i)} 
+    &= 
+    \log{\left(\prod_{i=1}^5\binom{5}{y_i} \pi_i^{y_i} (1 - \pi_i)^{5 - y_i}\right)} \\
+    &=
+    \sum_{i=1}^5 \log{\left(\binom{5}{y_i} \pi_i^{y_i} (1 - \pi_i)^{5 - y_i}\right)} \\
+    &=
+    \sum_{i=1}^5 \log{\binom{5}{y_i}} + y_i\log{\pi_i} + (5 - y_i)\log{(1 - \pi_i)} \\
+    &=
+    \sum_{i=1}^5 \log{\binom{5}{y_i}} + y_i \log{\left(\frac{1}{1 + \exp{(-(\alpha + \beta x_i))}}\right)} \\ 
+    &+
+    (5 - y_i)(-(\alpha +\beta x_i) - \log{\left(1 + \exp{(-(\alpha + \beta x_i))}\right)}. 
+\end{align*}
+Since we are interested in the unnormalized log-posterior we note that 
+\begin{align*}
+    \log{f(y|\pi_i)} 
+    &=
+    \log{\left(\prod_{i=5}^5 f(y_i|\pi_i)\right)} \\
+    &=
+    \sum_{i=1}^5 \log{f(y_i|\pi_i)}
+\end{align*}
+and we thus have
+\begin{align*}
+    \log{f(\pi_i|y)} 
+    &\propto
+    \log{f(y|\pi_i) f(\pi_i)} \\
+    &=
+    \log{\left(\left(\prod_{i=5}^5 f(y_i|\pi_i)\right) f(\pi_i)\right)} \\
+    &= 
+    \sum_{i=1}^5 \log{f(y_i|\pi_i)} + \log{f(\pi_i)}.
+\end{align*}
+
+
 
 ```{r}
 library(mvtnorm)
@@ -34,11 +775,6 @@ library(tidyverse)
 library(rstan)
 library(knitr)
 ```
-
-```{r, out.width="60%", fig.align="center", fig.cap="dfg fdaf"}
-include_graphics("IMG_1171.jpg")
-```
-
 
 ```{r}
 # loading the data
@@ -403,8 +1139,8 @@ model_data <- list(
   "Y" = data_stock,
   "vec_1" = rep(1, 6),
   "identity_mat" = diag(1, 6), 
-  "P_alpha" = P_A, 
-  "P_beta" = P_B
+  "P_A" = P_A, 
+  "P_B" = P_B
   )
 
 model_fit <- stan(
@@ -547,23 +1283,137 @@ traceplot(
 
 In conclusion our model does not seem to capture the relevant properties of the data set. Our model outputs higher variance and larger mean in absolute value. The mean is in most cases up to ten times bigger than the sample mean of the data set. The sign of the mean is not preserved as well. For what reason this happens is difficult to tell. Maybe the way we have defined our model makes it not able to extract and use the relevant information in the data. But when it comes to convergence diagnostics of the model it can be argued to be satisfactory. 
 
+# Task 7
 
-```{r, eval=FALSE}
-# testing area
-set.seed(990108)
+## Part a
 
-P_0 <-  P_alpha + P_beta   
+A certain coin has probability of landing heads $\omega$ and we set the prior for $\omega$ to follow a beta distribution with parameters $\alpha$ and $\beta$ both strictly bigger than 1. Define the loss function $L(\omega, d)$ for estimate $d$ and value $\omega$ as
+\begin{equation*}
+    L(\omega, d ) = \frac{(\omega - d)^2 + d^2}{\omega}.
+\end{equation*}
+First we will find the Bayes rule and risk for the immediate decision. First we find that 
+\begin{equation*}
+    \E(L(\omega, d)) = \E\left( \frac{\omega^2 - 2\omega d + 2d^2}{\omega}\right) = \E(\omega) - 2
+    d + 2d^2\E\left(\frac{1}{\omega}\right). 
+\end{equation*}
+We easily find that
+\begin{equation*}
+    \frac{\partial}{\partial d} \E(L(\omega, d)) = -2 + 4d \E\left(\frac{1}{\omega}\right)
+\end{equation*}
+and finding $d$ that makes the derivative equal 0 gives us the Bayes rule of immediate decision
+\begin{equation}
+    d^* = \frac{1}{2\E\left(\frac{1}{\omega}\right)}.
+\end{equation}
+The Bayes risk of immediate decision is easily found as 
+\begin{multline}
+    \E(L(\omega, d^*)) 
+    =
+    \E(\omega) - 2\cdot \frac{1}{2\E\left(\frac{1}{\omega}\right)} + 2 \left(\frac{1}{2\E\left(\frac{1}{\omega}\right)}\right) \E\left(\frac{1}{\omega}\right) \\
+    =
+    \E(\omega) - \frac{1}{\E\left(\frac{1}{\omega}\right)} + \frac{1}{2\E\left(\frac{1}{\omega}\right)} 
+    =
+    \E(\omega) - \frac{1}{2\E\left(\frac{1}{\omega}\right)}.
+\end{multline}
+Since $\omega$ is beta distributed we know that $\E(\omega) = \alpha / (\alpha + \beta)$. We can also derive the other expectation using law of the unconscious statistician as follows 
+\begin{align*}
+    \E\left(\frac{1}{\omega}\right) 
+    &=
+    \int_0^1 \frac{1}{\omega} \frac{1}{B(\alpha, \beta)} \omega^{\alpha - 1} (1 - \omega)^{\beta -1} d\omega \\
+    &=
+    \frac{B(\alpha - 1, \beta)}{B(\alpha, \beta)} \int_0^1 \frac{1}{B(\alpha - 1, \beta)} \omega^{\alpha - 1 - 1} (1 - \omega)^{\beta -1} d\omega \\
+    &=
+    \frac{B(\alpha - 1, \beta)}{B(\alpha, \beta)} \\
+    &=
+    \frac{\Gamma (\alpha - 1)\Gamma (\alpha + \beta)}{\Gamma (\alpha + \beta - 1) \Gamma (\alpha)} \\
+    &= 
+    \frac{\alpha + \beta - 1}{\alpha - 1},
+\end{align*}
+where in the last equality we used the property that $\Gamma (x + 1) = x\Gamma (x)$ for $0 < x < \infty$ [@rudin, P. 192]. Using this and $\E(\omega) = \alpha / (\alpha + \beta)$ in equation (9) and (10) we get
+\begin{align}
+    d^* &= \frac{1}{2}\cdot \frac{\alpha - 1}{\alpha + \beta - 1}, \\
+    \E(L(\omega, d^*)) &= \frac{\alpha}{\alpha + \beta} - \frac{1}{2}\cdot \frac{\alpha - 1}{\alpha + \beta - 1}.
+\end{align}
 
-test <- LaplacesDemon::rinvwishart(100, 100 * P_0)  
+# Part b
 
-rmvnorm(
-  10000, 
-  mean = c(-0.07, -0.06, 0.03, -0.02, -0.05, 0.03), 
-  test
-) %>% 
-  as.data.frame() %>% 
-  mutate(mean1 = mean(V1), var1 = var(V1))
-  
-```
+Now we have tossed the coin n times and observed $k$ heads and $n-k$ tails. Let us find the new Bayes rule and risk. We assume that the coin tosses are independent so that we have for toss $i$ the outcome $X_i|\omega \sim bernoulli(\omega)$. Now let $x = (x_1, \dots , x_n)$ so that  
+\begin{align*}
+    f(\omega|x) 
+    &\propto 
+    f(x|\omega) f(\omega) \\
+    &=
+    \prod_{i=1}^n f(x_i|\omega) f(\omega) \\
+    &= 
+    \prod_{i=1}^n \omega^{x_i} (1 - \omega)^{1 - x_i} \frac{1}{B(\alpha, \beta)} \omega^{\alpha - 1} (1 - \omega)^{\beta - 1} \\
+    &\propto
+    \omega^{\sum_{i}^n x_i + \alpha - 1}(1 - \omega)^{n - \sum_i^n + \beta - 1} \\
+    &=
+    \omega^{k + \alpha - 1}(1 - \omega)^{n - k + \beta - 1}.
+\end{align*}
+The last equality follows since we know that the number of heads $k = \sum_i^n x_i$. This is a kernel of a beta distribution with parameters $\tilde{\alpha} =k + \alpha$ and $\tilde{\beta} = n - k + \beta$. Note that in part a we calculated the expectations with respect to $f(\omega)$ which was beta distributed with parameters $\alpha$ and $\beta$, but now instead we should consider the expectations with respect to $f(\omega|x)$ which also is beta distributed but with different parameters. We can exploit this conjugacy and use our calculations in a to find the Bayes rule and risk by just substituting the parameters in equations (11) and (12) with $\alpha = \tilde{\alpha}$ and $\beta = \tilde{\beta}$. This gives us the Bayes rule 
+\begin{equation*}
+    d^* = \frac{1}{2} \cdot \frac{k + \alpha - 1}{n + \alpha + \beta - 1}.
+\end{equation*}
+Similarly we get the Bayes risk as 
+\begin{equation}
+    \E_{f(\omega|x)}(L(\omega, d^*)) 
+    = 
+    \frac{k + \alpha}{n + \alpha + \beta} - \frac{1}{2}\cdot \frac{k + \alpha - 1}{n + \alpha + \beta - 1}. 
+\end{equation}
+
+\subsubsection*{Part c}
+
+The Bayes decision function is now viewed as a random variable 
+\begin{equation*}
+    \delta^*(x) = \frac{1}{2} \cdot \frac{\sum_i^n X_i + \alpha - 1}{n + \alpha + \beta - 1}
+\end{equation*}
+The Bayes risk of the sampling procedure is then given by the expected value of (13) when viewed as a random variable, namely 
+\begin{multline}
+    \E(\E(L(\omega, \delta^*(x)) | X))
+    =
+    \E\left ( \frac{\sum_i^n X_i + \alpha}{n + \alpha + \beta} - \frac{1}{2}\cdot \frac{\sum_i^n X_i + \alpha - 1}{n + \alpha + \beta - 1} \right ) 
+    = \\
+    \frac{1}{n + \alpha + \beta} \left (\sum_{i = 1}^n \E(X_i) + \alpha \right ) - \frac{1}{2}\cdot \frac{1}{n + \alpha + \beta -1} \left(\sum_{i = 1}^n \E(X_i) + \alpha - 1 \right).
+\end{multline}
+We have that 
+\begin{equation*}
+    \sum_{i=1}^n\E(X_i) 
+    = 
+    \sum_{i=1}^n\E(\E(X_i | \omega))
+    =
+    \sum_{i=1}^n\E(\omega)
+    =
+    n\E(\omega)
+    =
+    n\frac{\alpha}{\alpha + \beta},
+\end{equation*}
+where we have used the independence of $X_i$ given $\omega$. Inserting our results into equation (14) now gives
+\begin{multline*}
+    \E(\E(L(\omega, \delta^*(x)) | X)) 
+    = \\
+    \frac{1}{n + \alpha + \beta} \left (n\frac{\alpha}{\alpha + \beta} + \alpha \right ) - \frac{1}{2}\cdot \frac{1}{n + \alpha + \beta -1} \left(n\frac{\alpha}{\alpha + \beta} + \alpha - 1 \right).
+\end{multline*}
+Now we can use that $\alpha = \beta = 2$ and then get 
+\begin{multline*}
+    \frac{1}{n + \alpha + \beta} \left (n\frac{\alpha}{\alpha + \beta} + \alpha \right ) - \frac{1}{2}\cdot \frac{1}{n + \alpha + \beta -1} \left(n\frac{\alpha}{\alpha + \beta} + \alpha - 1 \right) 
+    = \\
+    \frac{1}{n + 4} \left(n \frac{2}{4} + 2 \right) - \frac{1}{2}\cdot \frac{1}{n + 3} \left(n\frac{2}{4} + 1\right)
+    =
+    \frac{1}{2} - \frac{1}{4}\cdot \frac{n + 2}{n + 3}
+    =
+    \frac{n+4}{4(n+3)}.
+\end{multline*}
+
+\subsection*{Bonus question}
+
+In the Bayesian approach to statistics arguably one of the most serious advantage is the fact of formally incorporate prior knowledge by the prior distribution. Although this seems like a very big advantage from the classical frequentist approach, one can also say that this can give rise to major consequences. Is it really possible to be objective in defining the prior knowledge? As a statistician one should be concerned with objective knowledge and not subjective by using your own belief. Because then one could really just manipulate the data in any way desired. The Bayesian approach also promotes to be biased to your prior belief since you often believe results that coincide with you prior knowledge rather than surprising results. The prior distributions also seems in many cases just to be conjugate forms for convenience. So the total objectiveness one should strive for is in many cases just not there. Moreover, the prior knowledge is often not shared between different people so which prior knowledge is the "correct" one?     
+
+Then one may use noninformative priors since they are in some sense totally objective for the data. But then the nice property of incorporating prior knowledge is omitted. Also, the noninformative part is not mathematically well defined in how one can assess that the proposed prior contains "no information" about the parameter. It is also very discomforting that one may define and use improper priors, i.e. priors that do not integrate to 1 and are thus not even distribution functions. But in some cases we might then end up with posterior distributions that are proper distributions and then be able to do our Bayesian analysis.  
+
+On the other hand, in contrast to the frequentist approach one suppose that the parameter of interest $\theta$ is a random variable rather than only a fixed unknown quantity. All inference concerning parameter $\theta$ is based on the posterior distribution $f(\theta|y)$ where $y$ is a vector of some observed data. Because of this one may argue that credible intervals, which is the counterpart of confidence intervals in the Bayesian setting, is easier to interpret. The confidence intervals have always been misunderstood by many as the probability of the parameter being in the interval. It is rather that we can with confidence intervals say with this probability our interval will contain the true unknown value of the parameter. This is because in the frequentist setting we see the parameter as non-random. Bayesian credible intervals is nice to interpret since we can readily say that conditioned on the observed data we can derive the probability that the parameter is in the credible interval. The trade-off is of course that we need to define the prior distribution. 
+
+The Bayesian approach can give rise to posterior distributions that are analytically impossible to find and often we need to rely on computationally heavy methods approximating it like Markov chain Monte Carlo (MCMC) methods. But with the computational power we have today this is not really a problem of great concern and will probably not become serious in the future as well. However, the computational aspect has made the Bayesian approach too heavily focused on hard computation and really just applying MCMC methods to the difficult problems. This shifts the focus to optimizing the methods convergence instead of looking with a broader scope on the whole model and experiment design to even argue if it seems valid to use this MCMC method.
+
+In conclusion, Bayesian methods can be used with great success but one needs to be really careful and considerate. As any method, it has its flaws and does not solve every problem optimally. If you have a very good and irrefutable prior knowledge then the statistical inference may give trustworthy results that you could not attain by using the classical framework. But in many problems one can not surely say that we have good prior knowledge. We should really strive to make the most objective analysis and not involve our own beliefs. So, be a good statistician and let your own prior belief follow a perfectly "noninformative" prior distribution. 
 
 # References

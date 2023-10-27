@@ -217,12 +217,12 @@ model_data <- list(
   "Y" = data_stock,
   "vec_1" = rep(1, 6),
   "identity_mat" = diag(1, 6), 
-  "P_alpha" = P_A, 
-  "P_beta" = P_B
+  "P_A" = P_A, 
+  "P_B" = P_B
 )
 
 model_fit <- stan(
-  "stan_model_6.stan",
+  "take_home_exam/stan_model_6.stan",
   data = model_data,
   chains = 4, 
   iter = 30000, 
