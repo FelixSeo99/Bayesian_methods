@@ -694,7 +694,7 @@ Comparing the results of the mean squared error for both point estimates we clea
 include_graphics("IMG_1171.jpg")
 ```
 
-So we will end up with a sample $\{m_{i*}, \theta_{m_{i*}}^{i*}\}$ as seen in Figure 1 of size $K \leq N$ where $1 \leq i \leq K$. The posterior probabilities is then approximated by
+This part is based on the article [@sunnaker_MC]. So we will end up with a sample $\{m_{i*}, \theta_{m_{i*}}^{i*}\}$ as seen in Figure 1 of size $K \leq N$ where $1 \leq i \leq K$. The posterior probabilities is then approximated by
 \begin{equation*}
     P(M = m| x_0) = \frac{\text{Number of}\ m_{i*} = m}{N}, 
 \end{equation*}
@@ -754,15 +754,15 @@ Since we are interested in the unnormalized log-posterior we note that
     &=
     \sum_{i=1}^5 \log{f(y_i|\pi_i)}
 \end{align*}
-and we thus have
+and we thus have with $\theta = (\alpha, \beta)$ since we see $\pi_i$ as a function of the parameters given the data that
 \begin{align*}
-    \log{f(\pi_i|y)} 
+    \log{f(\theta|y)} 
     &\propto
-    \log{(f(y|\pi_i) f(\pi_i))} \\
+    \log{(f(y|\theta) f(\theta))} \\
     &=
-    \log{\left(\left(\prod_{i=5}^5 f(y_i|\pi_i)\right) f(\pi_i)\right)} \\
+    \log{\left(\left(\prod_{i=5}^5 f(y_i|\theta)\right) f(\theta)\right)} \\
     &= 
-    \sum_{i=1}^5 \log{f(y_i|\pi_i)} + \log{f(\pi_i)}.
+    \sum_{i=1}^5 \log{f(y_i|\theta)} + \log{f(\theta)}.
 \end{align*}
 
 
@@ -1365,8 +1365,6 @@ The Bayes decision function is now viewed as a random variable
 \end{equation*}
 The Bayes risk of the sampling procedure is then given by the expected value of (13) when viewed as a random variable, namely 
 \begin{multline}
-    \E(\E(L(\omega, \delta^*(x)) | X))
-    =
     \E\left ( \frac{\sum_i^n X_i + \alpha}{n + \alpha + \beta} - \frac{1}{2}\cdot \frac{\sum_i^n X_i + \alpha - 1}{n + \alpha + \beta - 1} \right ) 
     = \\
     \frac{1}{n + \alpha + \beta} \left (\sum_{i = 1}^n \E(X_i) + \alpha \right ) - \frac{1}{2}\cdot \frac{1}{n + \alpha + \beta -1} \left(\sum_{i = 1}^n \E(X_i) + \alpha - 1 \right).
@@ -1383,12 +1381,10 @@ We have that
     =
     n\frac{\alpha}{\alpha + \beta},
 \end{equation*}
-where we have used the independence of $X_i$ given $\omega$. Inserting our results into equation (14) now gives
-\begin{multline*}
-    \E(\E(L(\omega, \delta^*(x)) | X)) 
-    = \\
+where we have used the independence of $X_i$ given $\omega$. Inserting our results into equation (14) now gives the Bayes risk of the sampling procedure
+\begin{equation*}
     \frac{1}{n + \alpha + \beta} \left (n\frac{\alpha}{\alpha + \beta} + \alpha \right ) - \frac{1}{2}\cdot \frac{1}{n + \alpha + \beta -1} \left(n\frac{\alpha}{\alpha + \beta} + \alpha - 1 \right).
-\end{multline*}
+\end{equation*}
 Now we can use that $\alpha = \beta = 2$ and then get 
 \begin{multline*}
     \frac{1}{n + \alpha + \beta} \left (n\frac{\alpha}{\alpha + \beta} + \alpha \right ) - \frac{1}{2}\cdot \frac{1}{n + \alpha + \beta -1} \left(n\frac{\alpha}{\alpha + \beta} + \alpha - 1 \right) 
