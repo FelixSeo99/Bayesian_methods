@@ -16,7 +16,8 @@ mean_vec <- c(0, 10)
 cov_mat <- matrix(c(4, 12, 12, 100), nrow = 2)
 
 # x and y is vector of values found in the data file. n is the batch size 
-# which is 5 here. Outputs the unnormalized log-posterior. 
+# which is 5 here. Outputs the unnormalized log-posterior for given alpha and
+# beta. 
 unnorm_post <- function(alpha, beta, x, y, n){
   prob_pi <- 1 / (1 + exp( - (alpha + beta * x)))
   log_lik <- dbinom(y, n, prob_pi, log = TRUE) # log=TRUE gives the log like.

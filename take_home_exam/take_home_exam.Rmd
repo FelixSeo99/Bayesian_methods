@@ -1,7 +1,7 @@
 ---
 title: "Take Home Exam in Bayesian Methods"
 author: "Felix Seo"
-date: "2023-10-27"
+date: "2023-10-28"
 bibliography: references.bibtex
 output:
   pdf_document: 
@@ -538,7 +538,7 @@ where $M = \Delta = \mathbb{R}$ is the whole real line. The integrand in (6) can
     =
     f(z|\mu, \delta) f(\mu, \delta| x, y)
 \end{multline*}
-where for the third equality we used our calculations in (5). This calcualtion was done since we from part a have the distribution of $f(\mu, \delta| x, y)$ and can use the form in (3).  Also $Z|\mu, \delta \sim N(\mu - \delta, \sigma^2)$. So inserting this in (6) we get 
+where for the third equality we used our calculations in (5). This calculation was done since we from part a have the distribution of $f(\mu, \delta| x, y)$ and can use the form in (3).  Also $Z|\mu, \delta \sim N(\mu - \delta, \sigma^2)$. So inserting this in (6) we get 
 \begin{multline}
     f(z|x, y) 
     =
@@ -696,9 +696,9 @@ include_graphics("IMG_1171.jpg")
 
 So we will end up with a sample $\{m_{i*}, \theta_{m_{i*}}^{i*}\}$ as seen in Figure 1 of size $K \leq N$ where $1 \leq i \leq K$. The posterior probabilities is then approximated by
 \begin{equation*}
-    P(M = m| x_0) = \frac{\text{Number of}\ m_{i*} = m}{N}.
+    P(M = m| x_0) = \frac{\text{Number of}\ m_{i*} = m}{N}, 
 \end{equation*}
-Once we have approximated the posterior probabilities we can use concepts of Bayesian model comparison. To compare the relative plausibility of the models we can compute the posterior ratio which is relates to the Bayes factor, that is 
+where the numerator is the number of $m_{i*}$ in the sample that is equal to type $m$ model. Once we have approximated the posterior probabilities we can use concepts of Bayesian model comparison. To compare the relative plausibility of the models we can compute the posterior ratio which is related to the Bayes factor, that is 
 \begin{equation*}
     \frac{P(m_1| x_0)}{P(m_2| x_0)}
     =
@@ -708,9 +708,7 @@ Once we have approximated the posterior probabilities we can use concepts of Bay
 \end{equation*}
 where $B_{1, 2}$ is the Bayes factor. 
 
-\subsection*{Problem 5}
-
-\subsubsection*{Part a}
+# Task 5
 
 With $y_i|\pi_i \sim Bin(n_i, \pi_i)$ and 
 \begin{equation*}
@@ -760,7 +758,7 @@ and we thus have
 \begin{align*}
     \log{f(\pi_i|y)} 
     &\propto
-    \log{f(y|\pi_i) f(\pi_i)} \\
+    \log{(f(y|\pi_i) f(\pi_i))} \\
     &=
     \log{\left(\left(\prod_{i=5}^5 f(y_i|\pi_i)\right) f(\pi_i)\right)} \\
     &= 
@@ -783,8 +781,6 @@ data_returns <- read_delim("../data/returns.csv", delim = ",") %>%
   mutate(across(contains("Stock"), ~as.numeric(.x)))
 
 ```
-
-# Task 5
 
 We can make a contour plot of the unnormalized posterior in the range $\alpha \in [-2.5, 5]$ and $\beta \in [-1, 30]$ seen in Figure 2.  
 
@@ -893,7 +889,7 @@ samples %>%
 
 ```
 
-We can see in Figure 3 the traceplots for the parameters and that $\alpha$ has a smaller spread that $\beta$. Visually it is quite difficult to see if convergence have been attained. We should also try many different starting points for the parameters and plotting them to see if the chains visually coincide. A burn-in phase is desired where we remove draws from the beginning of the chains to not be able to distinguish where each chain has started and the chains get well mixed. Still with this we should use a quantitative statistic to infer whether convergence is reached or not. Since if we make traceplots for 6 different starting values of $\alpha$ and $\beta$ we can see the need for quantitative methods. We call each set of starting values and its traceplot a chain. 
+We can see in Figure 3 the traceplots for the parameters and that $\alpha$ has a smaller spread that $\beta$. Visually it can be argued that convergence have been attained. We should also try many different starting points for the parameters and plotting them to see if the chains visually coincide. A burn-in phase is desired where we remove draws from the beginning of the chains to not be able to distinguish where each chain has started. Knowing how much burn-in to have is a difficult problem and depends on the convergence of the Markov chain and how close to the posterior we need to be. Still with this we should use a quantitative statistic to infer whether convergence is reached or not. Making traceplots for 6 different starting values of $\alpha$ and $\beta$ we can see the need for quantitative methods. We call each set of starting values and its traceplot a chain. 
 
 ```{r, fig.cap = "Traceplots of $\\alpha$ and $\\beta$ with 10000 iterations. Here 6 different starting values of $\\alpha$ and $\\beta$ are considered so we end up with 6 chains for each parameter."}
 set.seed(990108)
@@ -921,7 +917,7 @@ samples %>%
   labs(color = "Chain")
 ```
 
-In Figure 4 we can see that it seems that we may have reached convergence by visual analysis. But we should also combine this with quantitative methods to be more sure. Let us now look at the marginal distribution of the parameters. 
+In Figure 4 we can see that it seems that we may have reached convergence at least for $\alpha$ but more difficult to say for $\beta$ by visual analysis. So one should also combine this with quantitative methods to be more sure. Let us now look at the marginal distribution of the parameters. 
 
 ```{r, fig.cap = "Histograms of the marginal posterior distribution of $\\alpha$ and $\\beta$."}
 # Task 5d marginal distribution of the parameters 
@@ -1308,9 +1304,9 @@ The Bayes risk of immediate decision is easily found as
 \begin{multline}
     \E(L(\omega, d^*)) 
     =
-    \E(\omega) - 2\cdot \frac{1}{2\E\left(\frac{1}{\omega}\right)} + 2 \left(\frac{1}{2\E\left(\frac{1}{\omega}\right)}\right) \E\left(\frac{1}{\omega}\right) \\
+    \E(\omega) - 2\cdot \frac{1}{2\E\left(\frac{1}{\omega}\right)} + 2 \left(\frac{1}{2\E\left(\frac{1}{\omega}\right)}\right)^2 \E\left(\frac{1}{\omega}\right) 
     =
-    \E(\omega) - \frac{1}{\E\left(\frac{1}{\omega}\right)} + \frac{1}{2\E\left(\frac{1}{\omega}\right)} 
+    \E(\omega) - \frac{1}{\E\left(\frac{1}{\omega}\right)} + \frac{1}{2\E\left(\frac{1}{\omega}\right)} \\
     =
     \E(\omega) - \frac{1}{2\E\left(\frac{1}{\omega}\right)}.
 \end{multline}
@@ -1406,14 +1402,14 @@ Now we can use that $\alpha = \beta = 2$ and then get
 
 \subsection*{Bonus question}
 
-In the Bayesian approach to statistics arguably one of the most serious advantage is the fact of formally incorporate prior knowledge by the prior distribution. Although this seems like a very big advantage from the classical frequentist approach, one can also say that this can give rise to major consequences. Is it really possible to be objective in defining the prior knowledge? As a statistician one should be concerned with objective knowledge and not subjective by using your own belief. Because then one could really just manipulate the data in any way desired. The Bayesian approach also promotes to be biased to your prior belief since you often believe results that coincide with you prior knowledge rather than surprising results. The prior distributions also seems in many cases just to be conjugate forms for convenience. So the total objectiveness one should strive for is in many cases just not there. Moreover, the prior knowledge is often not shared between different people so which prior knowledge is the "correct" one?     
+In the Bayesian approach to statistics, arguably one of the most serious advantage is the fact that one can formally incorporate prior knowledge by the prior distribution. Although this seems like a very big advantage from the classical frequentist approach, one can also say that this can give rise to major consequences. Is it really possible to be objective in defining the prior knowledge? As a statistician one should be concerned with objective knowledge and not subjective defined by your own belief. Because then one could really just manipulate the data in any way desired. The Bayesian approach also promotes to be biased to your prior belief since you often believe results that coincide with you prior knowledge rather than surprising results. The prior distributions also seems in many cases just to be conjugate forms for convenience. So the total objectiveness one should strive for is in many cases just not there. Moreover, the prior knowledge is often not shared between different people so which prior knowledge is the "correct" one?     
 
 Then one may use noninformative priors since they are in some sense totally objective for the data. But then the nice property of incorporating prior knowledge is omitted. Also, the noninformative part is not mathematically well defined in how one can assess that the proposed prior contains "no information" about the parameter. It is also very discomforting that one may define and use improper priors, i.e. priors that do not integrate to 1 and are thus not even distribution functions. But in some cases we might then end up with posterior distributions that are proper distributions and then be able to do our Bayesian analysis.  
 
-On the other hand, in contrast to the frequentist approach one suppose that the parameter of interest $\theta$ is a random variable rather than only a fixed unknown quantity. All inference concerning parameter $\theta$ is based on the posterior distribution $f(\theta|y)$ where $y$ is a vector of some observed data. Because of this one may argue that credible intervals, which is the counterpart of confidence intervals in the Bayesian setting, is easier to interpret. The confidence intervals have always been misunderstood by many as the probability of the parameter being in the interval. It is rather that we can with confidence intervals say with this probability our interval will contain the true unknown value of the parameter. This is because in the frequentist setting we see the parameter as non-random. Bayesian credible intervals is nice to interpret since we can readily say that conditioned on the observed data we can derive the probability that the parameter is in the credible interval. The trade-off is of course that we need to define the prior distribution. 
+On the other hand, in contrast to the frequentist approach one suppose that the parameter of interest $\theta$ is a random variable rather than only a fixed unknown quantity. All inference concerning parameter $\theta$ is based on the posterior distribution $f(\theta|y)$ where $y$ is a vector of some observed data. Because of this one may argue that credible intervals, which is the counterpart of confidence intervals in the Bayesian setting, is easier to interpret. The confidence intervals are often misinterpreted by many as the probability of the parameter being in the interval. It is rather that we can with confidence intervals say with this probability our interval will contain the true unknown value of the parameter. This is because in the frequentist setting we see the parameter as non-random. Bayesian credible intervals is nice to interpret since we can readily say that conditioned on the observed data we can derive the probability that the parameter is in the credible interval. The trade-off is of course that we need to define the prior distribution. 
 
 The Bayesian approach can give rise to posterior distributions that are analytically impossible to find and often we need to rely on computationally heavy methods approximating it like Markov chain Monte Carlo (MCMC) methods. But with the computational power we have today this is not really a problem of great concern and will probably not become serious in the future as well. However, the computational aspect has made the Bayesian approach too heavily focused on hard computation and really just applying MCMC methods to the difficult problems. This shifts the focus to optimizing the methods convergence instead of looking with a broader scope on the whole model and experiment design to even argue if it seems valid to use this MCMC method.
 
-In conclusion, Bayesian methods can be used with great success but one needs to be really careful and considerate. As any method, it has its flaws and does not solve every problem optimally. If you have a very good and irrefutable prior knowledge then the statistical inference may give trustworthy results that you could not attain by using the classical framework. But in many problems one can not surely say that we have good prior knowledge. We should really strive to make the most objective analysis and not involve our own beliefs. So, be a good statistician and let your own prior belief follow a perfectly "noninformative" prior distribution. 
+In conclusion, Bayesian methods can be used with great success and can be really useful in some areas, but one needs to be really careful and considerate. As any method, it has its flaws and does not solve every problem optimally. If you have a very good and irrefutable prior knowledge then the statistical inference may give trustworthy results that you could not attain by using the classical framework. But in many problems one can not surely say that we have good prior knowledge. We should really strive to make the most objective analysis and not involve our own beliefs. So, be a good statistician and let your own prior belief follow a perfectly "noninformative" prior distribution. 
 
 # References
